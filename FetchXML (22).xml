@@ -1,0 +1,3265 @@
+function ToggleContactForm(executionContext) {
+    //Toggles based on the Contact Type
+    //if the form is update form
+
+    var formContext = executionContext.getFormContext();
+
+    // if (formContext.ui.getFormType() == 1 || formContext.ui.getFormType() == 2 || formContext.ui.getFormType() == 3) {
+
+    // variable to store the name of the form
+    var lblForm;
+
+    // get the value picklist field
+    var relType = formContext.getAttribute("casetypecode").getValue();
+
+    // switch statement to assign the form to the picklist value
+
+    //change the switch statement based on the forms numbers and picklist values
+    switch (relType) {
+        case 1:
+            lblForm = "Case";
+            break;
+        case 2:
+            lblForm = "Complaint";
+            break;
+        case 3:
+            lblForm = "Complaint";
+            break;
+        default:
+            lblForm = "Case";
+    } //end switch
+
+    // Current form's label
+    var formLabel = formContext.ui.formSelector.getCurrentItem().getLabel();
+
+    //check if the current form is form need to be displayed based on the value
+    if (formContext.ui.formSelector.getCurrentItem().getLabel() != lblForm) {
+        var items = formContext.ui.formSelector.items.get();
+        for (var i in items) {
+            var item = items[i];
+            var itemId = item.getId();
+            var itemLabel = item.getLabel()
+            if (itemLabel == lblForm) {
+                //Check the current form is the same form to be redirected.
+                if (itemLabel != formLabel) {
+                    //navigate to the form
+                    item.navigate();
+                } //endif
+            } //endif
+        } //end for
+    } //endif
+    //} //endif
+} //end function
+
+function GetRequiredRecord(formContext, entityName, name) {
+    var departmentId = formContext.getAttribute("vcu_departmentid");
+    var areadept = formContext.getAttribute("vcu_areadept");
+    var areadeptlu = formContext.getAttribute("vcu_areadeptlu");
+    if (name && name.includes("&")) {
+        name = name.replace("&", "%26");
+    }
+    if (entityName == "vcu_businessgoal") {
+        if (departmentId != null) {
+            formContext.getAttribute("vcu_departmentid").setValue(null);
+            if (name == null) {
+                formContext.getAttribute("vcu_departmentid").setValue(null);
+                return;
+            }
+        }
+    }
+
+    if (entityName == "vcu_departmentarea") {
+        if (areadept != null) {
+            formContext.getAttribute("vcu_areadept").setValue(null);
+            if (name == null) {
+                formContext.getAttribute("vcu_areadept").setValue(null);
+                return;
+            }
+        } else if (areadeptlu != null) {
+            formContext.getAttribute("vcu_areadeptlu").setValue(null);
+            if (name == null) {
+                formContext.getAttribute("vcu_areadeptlu").setValue(null);
+                return;
+            }
+        }
+
+    }
+
+
+    Xrm.WebApi.online.retrieveMultipleRecords(entityName, "?$filter=vcu_name eq '" + name + "'").then(
+        function success(results) {
+
+            for (var i = 0; i < results.entities.length; i++) {
+                if (name.includes("%26")) {
+                    name = name.replace("%26", "&");
+                }
+                if (entityName == "vcu_businessgoal" && departmentId != null) {
+                    if (results.entities.length > 0) {
+                        var lookupValue = new Array();
+                        lookupValue[0] = new Object();
+                        lookupValue[0].id = results.entities[i]["vcu_businessgoalid"];
+                        lookupValue[0].name = name;
+                        lookupValue[0].entityType = entityName;
+                        formContext.getAttribute("vcu_departmentid").setValue(lookupValue);
+                    } else {
+                        formContext.getAttribute("vcu_departmentid").setValue(null);
+                    }
+                }
+                else if (entityName == "vcu_departmentarea") {
+                    if (areadept != null) {
+                        if (name != null) {
+                            var lookupValue = new Array();
+                            lookupValue[0] = new Object();
+                            lookupValue[0].id = results.entities[i]["vcu_departmentareaid"];
+                            lookupValue[0].name = name;
+                            lookupValue[0].entityType = entityName;
+                            formContext.getAttribute("vcu_areadept").setValue(lookupValue);
+                        }
+                    }
+
+                    if (areadeptlu != null) {
+
+                        var lookupValue = new Array();
+                        lookupValue[0] = new Object();
+                        lookupValue[0].id = results.entities[i]["vcu_departmentareaid"];
+                        lookupValue[0].name = name;
+                        lookupValue[0].entityType = entityName;
+                        formContext.getAttribute("vcu_areadeptlu").setValue(lookupValue);
+                    }
+
+                }
+            }
+        },
+        function (error) {
+            Xrm.Utility.alertDialog(error.message);
+        }
+    );
+}
+
+function SetOwningSVP(formContext, name) {
+    var svpUser = formContext.getAttribute("vcu_owningsvp");
+    if (svpUser) {
+        Xrm.WebApi.online.retrieveMultipleRecords("systemuser", "?$filter=fullname eq '" + name + "'").then(
+            function success(results) {
+
+                for (var i = 0; i < results.entities.length; i++) {
+
+                    if (results.entities.length > 0) {
+                        var lookupValue = new Array();
+                        lookupValue[0] = new Object();
+                        lookupValue[0].id = results.entities[i]["systemuserid"];
+                        lookupValue[0].name = name;
+                        lookupValue[0].entityType = "systemuser";
+                        svpUser.setValue(lookupValue);
+                    }
+
+                }
+                if (results.entities.length == 0) {
+                    svpUser.setValue(null);
+                }
+            },
+            function (error) {
+                Xrm.Utility.alertDialog(error.message);
+            }
+        );
+    }
+
+}
+
+function SetDepartmentAndArea(executionContext) {
+    debugger;
+    var formContext = executionContext.getFormContext();
+
+    var formLabel = formContext.ui.formSelector.getCurrentItem().getLabel();
+    if (formLabel === "Case") {
+        var caseDisposition1 = formContext.getControl("vcu_casedisposition1");
+        var caseDisposition2 = formContext.getControl("vcu_casedisposition2");
+
+        if (caseDisposition1 !== null && caseDisposition2 != null) {
+            var caseDisposition1Value = formContext.getAttribute("vcu_casedisposition1").getValue();
+            var caseDisposition2Value = formContext.getAttribute("vcu_casedisposition2").getValue();
+
+
+            if (caseDisposition1Value === 800440000) //Product or Services		
+            {
+                if (caseDisposition2Value == 800440000) {//Increase external transfer limit
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "ACH Group");
+                } else if (caseDisposition2Value == 800440023) {//External Transfer limit increase
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "ACH Group");
+                } else if (caseDisposition2Value == 800440004) {//One time External Transer
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "ACH Group");
+                } else if (caseDisposition2Value == 800440005) {//Service Related VIS
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Investment Services");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                } else if (caseDisposition2Value == 800440006) {//Investment Concerns
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Investment Services");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                } else if (caseDisposition2Value == 800440007) {//Mobile deposit limit increase
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Operations Support Team");
+
+                }
+            } else if (caseDisposition1Value === 800440001) //Fraud 
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Fraud");
+
+                if (caseDisposition2Value === 800440008)//Plastic and Electronic payment
+                {
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Plastic Fraud");
+                } else if (caseDisposition2Value === 800440009)//Other Fraud
+                {
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Fraud investigations");
+                } else if (caseDisposition2Value === 800440010) {//Fraud Wire transfer
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Wire Processing");
+                }
+
+
+            } else if (caseDisposition1Value === 800440002) //Member Solution
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Member Solutions");
+                GetRequiredRecord(formContext, "vcu_departmentarea", null);
+            } else if (caseDisposition1Value === 800440003) //Mortgage Solution
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Mortgage Servicing");
+                GetRequiredRecord(formContext, "vcu_departmentarea", null);
+
+            }
+            else if (caseDisposition1Value === 800440004) //Lending Services
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Lending Services");
+                GetRequiredRecord(formContext, "vcu_departmentarea", "Lending Services");
+            }
+
+        }
+    }
+    else if (formLabel === "Complaint") {
+        var compDisposition1 = formContext.getControl("vcu_complaintdisposition1");
+        var compDisposition2 = formContext.getControl("vcu_complaintdisposition2");
+
+        if (compDisposition1 !== null && compDisposition2 != null) {
+            var compDisposition1Value = formContext.getAttribute("vcu_complaintdisposition1").getValue();
+            var compDisposition2Value = formContext.getAttribute("vcu_complaintdisposition2").getValue();
+
+            if (compDisposition1Value === 800440000) //Contact Center
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Contact Center");
+                GetRequiredRecord(formContext, "vcu_departmentarea", "Quality Assurance");
+
+            } else if (compDisposition1Value === 800440002) //Member Solution
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Member Solutions");
+                GetRequiredRecord(formContext, "vcu_departmentarea", null);
+            } else if (compDisposition1Value === 800440004) //Product Or Service
+            {
+                if (compDisposition2Value === 800440027) //Temp or Permanent Mobile Check Deposit Increase
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Operations Support Team");
+                } else if (compDisposition2Value === 800440028) //Inadequate Service (VIS)
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Investment Services");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                } else if (compDisposition2Value === 800440029) //A@A / External Transfer Limit increase
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "ACH Group");
+                }
+            } else if (compDisposition1Value === 800440003) //Fraud
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Fraud");
+                if (compDisposition2Value === 800440003) //Credit - Debit - Zelle
+                {
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Plastic Fraud");
+                }
+                else if (compDisposition2Value === 800440004) ////Account take Over - Check Fraud - Other Fraud
+                {
+
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Fraud Investigations");
+                }
+            }
+            else if (compDisposition1Value === 800440005) //Loans
+            {
+                if (compDisposition2Value === 800440023 || compDisposition2Value === 800440024 || compDisposition2Value === 800440025 || compDisposition2Value === 800440026) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Consumer loan Admin");
+                } else if (compDisposition2Value === 800440015 || compDisposition2Value === 800440016 || compDisposition2Value === 800440017 || compDisposition2Value === 800440018) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Mortgage Origination");
+                }
+                else if (compDisposition2Value === 800440019 || compDisposition2Value === 800440020 || compDisposition2Value === 800440021 || compDisposition2Value === 800440022) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Mortgage servicing");
+                }
+                GetRequiredRecord(formContext, "vcu_departmentarea", null);
+
+            } else if (compDisposition1Value === 800440009) //Consumer Loan Admin
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Consumer Loan Admin");
+                GetRequiredRecord(formContext, "vcu_departmentarea", null);
+
+            }
+            else if (compDisposition1Value === 800440010) //Lending Services
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Lending Services");
+                GetRequiredRecord(formContext, "vcu_departmentarea", "Lending Services");
+            }
+            else if (compDisposition1Value === 800440007 || compDisposition1Value === 800440006) //Agency or  Othe or Commercial Services
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "COMMERCIAL SERVICES");
+                GetRequiredRecord(formContext, "vcu_departmentarea", null);
+            }
+            else if (compDisposition1Value === 800440001) //Branch
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", null);
+                GetRequiredRecord(formContext, "vcu_departmentarea", null);
+            }
+
+            else if (compDisposition1Value === 800440011) //ACH
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                GetRequiredRecord(formContext, "vcu_departmentarea", "ACH Group");
+            }
+            else if (compDisposition1Value === 800440012) //Address
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                GetRequiredRecord(formContext, "vcu_departmentarea", "operations Support Team");
+            }
+            else if (compDisposition1Value === 800440013) //ATM
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                GetRequiredRecord(formContext, "vcu_departmentarea", "ATM group");
+            }
+            else if (compDisposition1Value === 800440014) //Consumer Lending
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Consumer Loan Admin");
+                GetRequiredRecord(formContext, "vcu_departmentarea", null);
+            }
+            else if (compDisposition1Value === 800440015) //Credit Card  
+            {
+                if (compDisposition2Value === 800440188) { // Contact Center
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Contact Center");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Quality Assurance");
+                    SetOwningSVP(formContext, "Byron Gifford")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                else if (compDisposition2Value === 800440189) { // Dispute Fraud
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Fraud");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Plastic Fraud");
+                    SetOwningSVP(formContext, "Stephanie Curtis")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                else if (compDisposition2Value === 800440183) { // Application
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Lending Services");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    SetOwningSVP(formContext, "Eric Weatherly")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                else if (compDisposition2Value === 800440184 || compDisposition2Value === 800440186 || compDisposition2Value === 800440187 || compDisposition2Value === 800440190 || compDisposition2Value === 800440191 || compDisposition2Value === 800440192 || compDisposition2Value === 800440193 || compDisposition2Value === 800440194 || compDisposition2Value === 800440195 || compDisposition2Value === 800440196) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Card Services");
+                    SetOwningSVP(formContext, "Kris Carrera")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                else if (compDisposition2Value === 800440185) { // Branch
+                    GetRequiredRecord(formContext, "vcu_businessgoal", null);
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_owningsvp").setValue(null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                else if (compDisposition2Value === 800440034) { // Other
+                    GetRequiredRecord(formContext, "vcu_businessgoal", null);
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_owningsvp").setValue(null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                }
+            }
+            else if (compDisposition1Value === 800440016) //Digital
+            {
+                if (compDisposition2Value === 800440056 || compDisposition2Value === 800440180 || compDisposition2Value === 800440182) { //Mobile Banking Experience or Design || Online Banking Experience or Design || VyStar Website Functionality
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Digital Experience");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    SetOwningSVP(formContext, "Joseph R Colca");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                }
+                else if (compDisposition2Value === 800440174 || compDisposition2Value === 800440175 || compDisposition2Value === 800440176) { //OMB Internal Transfer || OMB Login Issue or Can't Sign In || OMB Missing Trx or Latency
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Digital Experience");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    SetOwningSVP(formContext, "Joseph R Colca");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                else if (compDisposition2Value === 800440181) { //Online Loan Application
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Lending Services");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    SetOwningSVP(formContext, "Eric Weatherly");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                else if (compDisposition2Value === 800440171) { //OMB Contact Info Change
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Digital Experience");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Digital Experience");
+                    SetOwningSVP(formContext, "Joseph R Colca");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                else if (compDisposition2Value === 800440172) { //OMB e-Statements and Tax Forms
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Records");
+                    SetOwningSVP(formContext, "Stephanie Curtis");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                else if (compDisposition2Value === 800440177 || compDisposition2Value === 800440178) { // OMB Mobile Deposit || OMB Wire
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Retail Operations");
+                    SetOwningSVP(formContext, "Stephanie Curtis");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                else if (compDisposition2Value === 800440050) { //DXO Credit Card Site Issue
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Card Services");
+                    SetOwningSVP(formContext, "Kris Carrera");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                else if (compDisposition2Value === 800440154 || compDisposition2Value === 800440173 || compDisposition2Value === 800440179) { //OMB Bill Pay || OMB External Transfer || OMB Zelle
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "ACH Group");
+                    SetOwningSVP(formContext, "Kris Carrera");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                else if (compDisposition2Value === 800440034) { //Other
+                    GetRequiredRecord(formContext, "vcu_businessgoal", null);
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_owningsvp").setValue(null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                }
+            }
+            else if (compDisposition1Value === 800440017) //Marketing
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Marketing Department");
+                GetRequiredRecord(formContext, "vcu_departmentarea", null);
+            }
+            else if (compDisposition1Value === 800440018) //Mortgages
+            {
+
+                if (compDisposition2Value === 800440162 || compDisposition2Value === 800440167) { //Application or Closing || HELOC Application and Servicing
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Mortgage Origination");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Mortgage Origination");
+                    SetOwningSVP(formContext, "Jennifer Kouchis");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                } else if (compDisposition2Value === 800440164 || compDisposition2Value === 800440170) { //Escrow or Servicing
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Mortgage Servicing");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Mortgage Servicing");
+                    SetOwningSVP(formContext, "Jennifer Kouchis");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                } else if (compDisposition2Value === 800440163 || compDisposition2Value === 800440166) { //Delinquency or Foreclosure
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Member Solutions");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Mortgage Collections");
+                    SetOwningSVP(formContext, "Eric Weatherly");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                } else if (compDisposition2Value === 800440165) { // Establishing Membership
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Deposit Services");
+                    SetOwningSVP(formContext, "Stephanie Curtis");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                } else if (compDisposition2Value === 800440168) { // HELOC Checks
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Wire & Retail Support");
+                    SetOwningSVP(formContext, "Stephanie Curtis");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                } else if (compDisposition2Value === 800440169) { // HELOC Debit Card
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Card Services");
+                    SetOwningSVP(formContext, "Kris Carrera");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                } else if (compDisposition2Value === 800440034) { //Other
+                    GetRequiredRecord(formContext, "vcu_businessgoal", null);
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_owningsvp").setValue(null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                }
+            } //
+            else if (compDisposition1Value === 800440019) //Plastics
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                GetRequiredRecord(formContext, "vcu_departmentarea", "operations Support Team");
+            }
+            else if (compDisposition1Value === 800440008) //Other
+            {
+                GetRequiredRecord(formContext, "vcu_businessgoal", null);
+                GetRequiredRecord(formContext, "vcu_departmentarea", null);
+            }
+            else if (compDisposition1Value === 800440020) //Transaction or Account  
+            {
+
+                if (compDisposition2Value === 800440083) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Wire processing");
+                }
+                else if (compDisposition2Value === 800440084) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "deposit services");
+                }
+                else if (compDisposition2Value === 800440085) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "ACH group");
+                }
+                else if (compDisposition2Value === 800440086) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "ACH group");
+                }
+                else if (compDisposition2Value === 800440071) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Consumer Loan Admin");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                }
+                else if (compDisposition2Value === 800440087) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "IRA group");
+                }
+                else if (compDisposition2Value === 800440088) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Deceased Processing");
+                }
+                else if (compDisposition2Value === 800440089) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "operations Support Team");
+                }
+                else if (compDisposition2Value === 800440092) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Fraud");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Fraud Investigations");
+                }
+                else if (compDisposition2Value === 800440093) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Member Solutions");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                }
+                else if (compDisposition2Value === 800440090) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Commercial services");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Commercial Loan processing");
+                }
+                else if (compDisposition2Value === 800440091) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Commercial services");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Commercial Loan servicing");
+                }
+                else if (compDisposition2Value === 800440094) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Fraud");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Plastic Fraud");
+                }
+                else if (compDisposition2Value === 800440095) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Member Solutions");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                }
+                else if (compDisposition2Value === 800440096) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "operations Support Team");
+                }
+
+            }
+            else if (compDisposition1Value === 800440021) // Deposit Account
+            {
+
+                if (compDisposition2Value === 800440097 || compDisposition2Value === 800440114) // Act Takeover
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Fraud");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Fraud Investigations");
+                    SetOwningSVP(formContext, "Stephanie Curtis")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440098 || compDisposition2Value === 800440100 || compDisposition2Value === 800440107) //Debit Card Fraud Dispute, ACH Fraud
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Fraud");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Plastic Fraud");
+                    SetOwningSVP(formContext, "Stephanie Curtis")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440099) // ACH Non-Fraud
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "ACH Group");
+                    SetOwningSVP(formContext, "Kris Carrera")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440101) //ATM Non-Fraud
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "ATM Group");
+                    SetOwningSVP(formContext, "Kris Carrera")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440102) //ATM Non-VyStar
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Card Services");
+                    SetOwningSVP(formContext, "Kris Carrera")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440103) //Charged Off or Sold
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Member Solutions");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    SetOwningSVP(formContext, "Eric Weatherly")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440104 || compDisposition2Value === 800440119) //Check Issue Non-Fraud
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Retail Operations");
+                    SetOwningSVP(formContext, "Stephanie Curtis")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+
+                }
+                if (compDisposition2Value === 800440105 || compDisposition2Value === 800440113 || compDisposition2Value === 800440117 || compDisposition2Value === 800440106) // Closed or Locked, Contact Information
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Deposit Operations");
+                    SetOwningSVP(formContext, "Stephanie Curtis")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440108 || compDisposition2Value === 800440109) //Debit Card Function or Issuance
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Card Services");
+                    SetOwningSVP(formContext, "Kris Carrera")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440110) // Deceased All Other
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Deceased Processing and Concierge");
+                    SetOwningSVP(formContext, "Stephanie Curtis")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440111 || compDisposition2Value === 800440115) //Deceased IRA
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "IRA Group");
+                    SetOwningSVP(formContext, "Stephanie Curtis")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440112) //Deposit Error
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", null);
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                    formContext.getAttribute("vcu_owningsvp").setValue(null)
+                }
+                if (compDisposition2Value === 800440116) //Legal Processing Issue
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Legal Processing");
+                    SetOwningSVP(formContext, "Stephanie Curtis")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+
+                if (compDisposition2Value === 800440118) // Statements
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Records");
+                    SetOwningSVP(formContext, "Stephanie Curtis")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+
+                if (compDisposition2Value === 800440034) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", null);
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                    formContext.getAttribute("vcu_owningsvp").setValue(null);
+                }
+                if (compDisposition2Value === 800440197) //Fees or Interest
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Deposit Operations");
+                    formContext.getAttribute("vcu_owningsvp").setValue(null);
+                }
+
+            }
+            else if (compDisposition1Value === 800440022) // Consumer Loan
+            {
+                if (compDisposition2Value === 800440120 || compDisposition2Value === 800440130 || compDisposition2Value === 800440127) // Application
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Lending Services");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    SetOwningSVP(formContext, "Eric Weatherly")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440121 || compDisposition2Value === 800440135 || compDisposition2Value === 800440134 || compDisposition2Value === 800440131 || compDisposition2Value === 800440128 || compDisposition2Value === 800440123 || compDisposition2Value === 800440124) // Bankruptcy or C&D
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Member Solutions");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    SetOwningSVP(formContext, "Eric Weatherly")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440122) // Branch
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", null);
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_owningsvp").setValue(null)
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440125) // Contact Center
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Contact Center");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Quality Assurance");
+                    SetOwningSVP(formContext, "Byron Gifford")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440126 || compDisposition2Value === 800440136 || compDisposition2Value === 800440132 || compDisposition2Value === 800440133) // Credit Reporting
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Consumer Loan Admin");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    SetOwningSVP(formContext, "Eric Weatherly")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440129) // Indirect Loan
+                {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Indirect Lending");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    SetOwningSVP(formContext, "Eric Weatherly")
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                }
+                if (compDisposition2Value === 800440034) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", null);
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                    formContext.getAttribute("vcu_owningsvp").setValue(null)
+                }
+                if (compDisposition2Value === 800440197) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Consumer Loan Admin");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_owningsvp").setValue(null)
+                }
+            }
+            else if (compDisposition1Value === 800440023) {
+                if (compDisposition2Value === 800440137) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", null);
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                    formContext.getAttribute("vcu_owningsvp").setValue(null)
+                }
+            }
+            else if (compDisposition1Value === 800440026) { //Commercial Banking
+                if (compDisposition2Value === 800440157 || compDisposition2Value === 800440158 || compDisposition2Value === 800440159) { //Loan
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Commercial Services");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                    SetOwningSVP(formContext, "David Walton")
+                }
+                if (compDisposition2Value === 800440160) { //Credit Card
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Payments");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Card Services");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                    SetOwningSVP(formContext, "Kris Carrera")
+                }
+                if (compDisposition2Value === 800440161) { //Deposit Account
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Business Deposit Services");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                    SetOwningSVP(formContext, "Stephanie Curtis")
+                }
+                if (compDisposition2Value === 800440034) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", null);
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                    formContext.getAttribute("vcu_owningsvp").setValue(null)
+                }
+
+            }
+            else if (compDisposition1Value === 800440025) {
+                if (compDisposition2Value === 800440155) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Marketing");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                    SetOwningSVP(formContext, "Patricia McElroy")
+                }
+                if (compDisposition2Value === 800440156) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Marketing");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                    SetOwningSVP(formContext, "Susan Song")
+                }
+                if (compDisposition2Value === 800440148) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Operations");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "M&A");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                    SetOwningSVP(formContext, "Stephanie Curtis")
+                }
+                if (compDisposition2Value === 800440149) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Insurance Services");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                    SetOwningSVP(formContext, "Tamara Naar")
+                }
+                if (compDisposition2Value === 800440150) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Investment Services");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                    SetOwningSVP(formContext, "Davida Carter")
+                }
+                if (compDisposition2Value === 800440151) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "VyStar Title Agency");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                    SetOwningSVP(formContext, "Dale Orr")
+                }
+                if (compDisposition2Value === 800440152) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "VyStar at Work");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(true);
+                    SetOwningSVP(formContext, "Janean Armstrong")
+                }
+                if (compDisposition2Value === 800440153) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Marketing");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                    SetOwningSVP(formContext, "Patricia McElroy")
+                }
+                if (compDisposition2Value === 800440034) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", null);
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                    formContext.getAttribute("vcu_owningsvp").setValue(null)
+                }
+            }
+            else if (compDisposition1Value === 800440024) {
+                if (compDisposition2Value === 800440138 || compDisposition2Value === 800440141 || compDisposition2Value === 800440142 || compDisposition2Value === 800440144) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Contact Center");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Quality Assurance");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                    SetOwningSVP(formContext, "Byron Gifford");
+                }
+                if (compDisposition2Value === 800440034 || compDisposition2Value === 800440139 || compDisposition2Value === 800440140 || compDisposition2Value === 800440147) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", null);
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                    formContext.getAttribute("vcu_owningsvp").setValue(null)
+                }
+                if (compDisposition2Value === 800440143) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Digital Experience");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                    SetOwningSVP(formContext, "Joseph Colca");
+                }
+                if (compDisposition2Value === 800440145) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Member Solutions");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", null);
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                    SetOwningSVP(formContext, "Eric Weatherly")
+                }
+                if (compDisposition2Value === 800440146) {
+                    GetRequiredRecord(formContext, "vcu_businessgoal", "Fraud");
+                    GetRequiredRecord(formContext, "vcu_departmentarea", "Fraud Investigations");
+                    formContext.getAttribute("vcu_regulatorycomplaint").setValue(false);
+                    SetOwningSVP(formContext, "Stephanie Curtis")
+                }
+            }
+        }
+    }
+}
+
+
+function SetDisposition2BasedOnDisposition1(executionContext) {
+    debugger;
+    var formContext = executionContext.getFormContext();
+    var formLabel = formContext.ui.formSelector.getCurrentItem().getLabel();
+    if (formLabel === "Case") {
+        var caseDisposition1 = formContext.getControl("vcu_casedisposition1");
+        var caseDisposition2 = formContext.getControl("vcu_casedisposition2");
+
+
+        if (caseDisposition1 !== null && caseDisposition2 != null) {
+            var caseDisposition1Value = formContext.getAttribute("vcu_casedisposition1").getValue();
+            caseDisposition1 = caseDisposition1.getOptions();
+            caseDisposition2 = caseDisposition2.getOptions();
+
+            // Clear current items
+            for (var i = 0; i < caseDisposition2.length; i++) {
+                formContext.getControl("vcu_casedisposition2").removeOption(caseDisposition2[i].value);
+            }
+
+            if (caseDisposition1Value === 800440000) //Product or Services  800440000
+            {
+
+                formContext.getControl("vcu_casedisposition2").addOption({ //EPACS //ACH Team
+                    value: 800440000,
+                    text: "Increase external transfer limit"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //EPACS //ACH Team
+                    value: 800440023,
+                    text: "External Transfer limit increase"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //EPACS
+                    value: 800440004,
+                    text: "One time External Transfer"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Investment Services 
+                    value: 800440005,
+                    text: "Service Related"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Investment Services 
+                    value: 800440006,
+                    text: "Investment Concerns"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Operations
+                    value: 800440007,
+                    text: "Mobile deposit limit increase"
+                });
+
+
+            }
+            else if (caseDisposition1Value === 800440001) //Fraud 800440001
+            {
+                formContext.getControl("vcu_casedisposition2").addOption({ //Fraud
+                    value: 800440008,
+                    text: "Plastic and Electronic payment"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Fraud
+                    value: 800440009,
+                    text: "Other Fraud"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Fraud
+                    value: 800440010,
+                    text: "Fraud Wire transfer"
+                });
+            }
+            else if (caseDisposition1Value === 800440004) //Lending Services 800440004
+            {
+                formContext.getControl("vcu_casedisposition2").addOption({ //Lending Services
+                    value: 800440025,
+                    text: "Issues with Loan Department"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Lending Services
+                    value: 800440024,
+                    text: "Loan funded Incorrectly"
+                });
+
+            }
+            else if (caseDisposition1Value === 800440005) //Other 
+            {
+                formContext.getControl("vcu_casedisposition2").addOption({
+                    value: 800440022,
+                    text: "Other"
+                });
+
+
+            }
+            else if (caseDisposition1Value === 800440002) //Member Solution 800440002
+            {
+                formContext.getControl("vcu_casedisposition2").addOption({ //Member Solution
+                    value: 800440011,
+                    text: "Account Locked for Non Payments"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Member Solution
+                    value: 800440012,
+                    text: "Skip a Payment"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Member Solution
+                    value: 800440013,
+                    text: "Charge off Account"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Member Solution
+                    value: 800440014,
+                    text: "Debt Protection products"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Member Solution
+                    value: 800440015,
+                    text: "Past due loan on deposit account"
+                });
+
+                formContext.getControl("vcu_casedisposition2").addOption({ //Member Solution
+                    value: 800440016,
+                    text: "Loan modification"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Member Solution
+                    value: 800440001,
+                    text: "Reposition foreclosure or Bankruptcy"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Member Solution
+                    value: 800440002,
+                    text: "Collection Call"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Member Solution
+                    value: 800440003,
+                    text: "Financial Hardship"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Member Solution
+                    value: 800440017,
+                    text: "Account Closed for Being Overdrawn"
+                });
+
+            } else if (caseDisposition1Value === 800440003) //Mortgage Servicing 800440003
+            {
+
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440034,
+                    text: "ACH Change Draft Day"
+                });
+
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440033,
+                    text: "ACH Setup"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440048,
+                    text: "Check Stop Payment - HELOC"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440052,
+                    text: "Check Stop Payment - VyStar Disbursement"
+                });
+
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440035,
+                    text: "Document Copy"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440036,
+                    text: "Escrow: Reanalyze Loan"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440037,
+                    text: "Escrow: Waive Escrow Acct"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440038,
+                    text: "Escrow: Shortage Payment"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440039,
+                    text: "Fee: Waive Late Fee"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440040,
+                    text: "Hardship Inquiry"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440041,
+                    text: "Hazard Claim Greater than 25K"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440042,
+                    text: "Insurance Refund"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440043,
+                    text: "Insurance Research Request"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440044,
+                    text: "Mortgage Payment Inquiry"
+                });
+
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440022,
+                    text: "Other"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440046,
+                    text: "Payment History Request"
+                });
+
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440049,
+                    text: "Payment Issue or Reversal"
+                });
+
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440045,
+                    text: "Payoff Quote Request"
+                });
+
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440047,
+                    text: "PMI: Request to Waive"
+                });
+
+
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440050,
+                    text: "Return check Payments (ACH & Checks)"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440051,
+                    text: "Verification of Mortgage"
+                });
+
+            }
+            else if (caseDisposition1Value === 800440006) // Credit Card
+
+            {
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440029,
+                    text: "Authorized User Form"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440028,
+                    text: "Balance Consolidation Request"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440031,
+                    text: "Credit Card Conversion Form"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440027,
+                    text: "Payment Adjustment Form"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440030,
+                    text: "Joint Card Holder Request Form"
+                });
+                formContext.getControl("vcu_casedisposition2").addOption({ //Mortgage Servicing
+                    value: 800440032,
+                    text: "UChoose Request Form"
+                });
+            }
+
+        }
+
+
+
+    }
+    else if (formLabel === "Complaint") {
+
+        var complaintDisposition1 = formContext.getControl("vcu_complaintdisposition1");
+        var complaintDisposition2 = formContext.getControl("vcu_complaintdisposition2");
+
+
+        if (complaintDisposition1 !== null && complaintDisposition2 != null) {
+            var complaintDisposition1Value = formContext.getAttribute("vcu_complaintdisposition1").getValue();
+            complaintDisposition1 = complaintDisposition1.getOptions();
+            complaintDisposition2 = complaintDisposition2.getOptions();
+
+            // Clear current items
+            for (var i = 0; i < complaintDisposition2.length; i++) {
+                formContext.getControl("vcu_complaintdisposition2").removeOption(complaintDisposition2[i].value);
+            }
+
+            if (complaintDisposition1Value === 800440001) //Branch
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440049,
+                    text: "ATM"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440001,
+                    text: "Check deposited in wrong account"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440048,
+                    text: "Design"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440034,
+                    text: "Other"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440047,
+                    text: "Service"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440000,
+                    text: "Unpleasent Member Experience"
+                });
+
+
+            } else if (complaintDisposition1Value === 800440000) //Contact Center
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Contact Center 
+                    value: 800440058,
+                    text: "Hold Time"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440034,
+                    text: "Other"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440047,
+                    text: "Service"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Contact Center 
+                    value: 800440002,
+                    text: "Unpleasant Experience with Contact Center Calls"
+                });
+            }
+            else if (complaintDisposition1Value === 800440010) //Lending Services 800440010
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Lending Services
+                    value: 800440037,
+                    text: "Incorrect Loan Document"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Lending Services
+                    value: 800440039,
+                    text: "Loan not funded correctly"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Lending Services
+                    value: 800440038,
+                    text: "Miscommunication By Lending Service Employee"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Lending Services
+                    value: 800440036,
+                    text: "Unpleasent experience with Lending service Employee"
+                });
+
+            } else if (complaintDisposition1Value === 800440006) //Commercial Services
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440030,
+                    text: "Commercial Lending Turn Around Time"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440031,
+                    text: "Unpleasant experience "
+                });
+
+            } else if (complaintDisposition1Value === 800440002) //Member Solution
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Member Solution
+                    value: 800440012,
+                    text: "Account closed for being overdrawn"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Member Solution
+                    value: 800440007,
+                    text: "Account locked for non payments"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Member Solution
+                    value: 800440010,
+                    text: "Charge off account"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Member Solution
+                    value: 800440014,
+                    text: "Collection Call"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Member Solution
+                    value: 800440009,
+                    text: "Debt protection products"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Member Solution
+                    value: 800440013,
+                    text: "Financial Hardship"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Member Solution
+                    value: 800440006,
+                    text: "Loan Modification for all loan products"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Member Solution
+                    value: 800440011,
+                    text: "Past due loan on deposit account"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Member Solution
+                    value: 800440008,
+                    text: "Reposition - Foreclosure - Bankruptcy"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Member Solution
+                    value: 800440035,
+                    text: "Unpleasant member experience from reps"
+                });
+
+
+            } else if (complaintDisposition1Value === 800440004) //Product Or Service
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //EPACS
+                    value: 800440029,
+                    text: "A2A/ External transfer limit increase"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Investment Services 
+                    value: 800440028,
+                    text: "Inadequate Services (VIS)"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Operations
+                    value: 800440027,
+                    text: "Temp or Permanent Mobile Check Deposit Increase"
+                });
+
+
+            } else if (complaintDisposition1Value === 800440003) //Frad
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Fraud 
+                    value: 800440004,
+                    text: "Account takeover - Check Fraud - Other Fraud Related"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Fraud 
+                    value: 800440003,
+                    text: "Credit - Debit - Zelle"
+                });
+
+
+
+            } else if (complaintDisposition1Value === 800440005) //Loans
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Consumer loan Admin
+                    value: 800440024,
+                    text: "Consumer Loan title and Lien questions"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Consumer loan Admin
+                    value: 800440023,
+                    text: "Credit reporting Question/ issue/request- Covers"
+                });
+
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Mortgage Origination
+                    value: 800440015,
+                    text: "Delay in Mortgage Process"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Consumer loan Admin
+                    value: 800440025,
+                    text: "Force placed CPI premium on loans"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Mortgage servicing
+                    value: 800440019,
+                    text: "Incorrect Loan terms - Regular customer complaints/ close the unit"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Mortgage Origination
+                    value: 800440018,
+                    text: "Issue with application- Heloc purchase"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Mortgage Origination
+                    value: 800440016,
+                    text: "Issues with client complaint- Heloc purchase decline"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Mortgage servicing
+                    value: 800440020,
+                    text: "Issue with HELOC Check"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Consumer loan Admin
+                    value: 800440026,
+                    text: "issue with Loan Pay off- Process issue"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Mortgage Origination
+                    value: 800440017,
+                    text: "Issues with Mortgage Contact"
+                });
+
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Mortgage servicing
+                    value: 800440022,
+                    text: "Mortage Escrow Issue"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({ //Mortgage servicing
+                    value: 800440021,
+                    text: "Recasting The Mortage Loan"
+                });
+
+            } else if (complaintDisposition1Value === 800440008) //other
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440034,
+                    text: "Other"
+                });
+            }
+            //else if (complaintDisposition1Value === 800440007) //Agency
+            // {
+            //  formContext.getControl("vcu_complaintdisposition2").addOption({
+            //  value: 800440032,
+            //text: "Agency"
+            //});
+            //}				
+            else if (complaintDisposition1Value === 800440011) //ACH
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440041,
+                    text: "Direct Deposit"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440040,
+                    text: "Stop Payment"
+                });
+
+            }
+            else if (complaintDisposition1Value === 800440012) //Address
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440044,
+                    text: "Email Address"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440043,
+                    text: "Mailing Address"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440042,
+                    text: "Physical Address"
+                });
+
+
+            }
+            else if (complaintDisposition1Value === 800440013) //ATM
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440046,
+                    text: "Non-Vystar ATM"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440045,
+                    text: "Vystar ATM"
+                });
+
+            }
+            else if (complaintDisposition1Value === 800440014) //Consumer Lending
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440053,
+                    text: "Ancillary Products(CUNA IWS GAP)"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440054,
+                    text: "CPI(Insurance)"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440055,
+                    text: "Credit reporting"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440052,
+                    text: "Loan Application"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440051,
+                    text: "Loan Payment"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440034,
+                    text: "Other"
+                });
+
+            }
+            else if (complaintDisposition1Value === 800440015) //Credit Card
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440183,
+                    text: "Application"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440184,
+                    text: "Balance Transfer or Cash Advance"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440185,
+                    text: "Branch"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440186,
+                    text: "Card Function or Issuance"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440187,
+                    text: "Cash Back or Rewards"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440188,
+                    text: "Contact Center"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440189,
+                    text: "Dispute Fraud"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440190,
+                    text: "Dispute Non-Fraud"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440191,
+                    text: "Fees"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440192,
+                    text: "Interest"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440034,
+                    text: "Other"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440193,
+                    text: "Payment or Payoff"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440194,
+                    text: "Promotions"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440195,
+                    text: "Rates"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440196,
+                    text: "Savings Secured Visa Issue"
+                });
+
+            }
+            else if (complaintDisposition1Value === 800440016) //Digital
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440050,
+                    text: "DXO Credit Card Site Issue"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440056,
+                    text: "Mobile Banking Experience or Design"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440154,
+                    text: "OMB Bill Pay"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440171,
+                    text: "OMB Contact Info Change"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440172,
+                    text: "OMB e-Statements and Tax Forms"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440173,
+                    text: "OMB External Transfer"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440174,
+                    text: "OMB Internal Transfer"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440175,
+                    text: "OMB Login Issue or Can't Sign In"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440176,
+                    text: "OMB Missing Trx or Latency"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440177,
+                    text: "OMB Mobile Deposit"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440178,
+                    text: "OMB Wire"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440179,
+                    text: "OMB Zelle"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440180,
+                    text: "Online Banking Experience or Design"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440181,
+                    text: "Online Loan Application"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440034,
+                    text: "Other"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440182,
+                    text: "VyStar Website Functionality"
+                });
+
+
+            }
+            else if (complaintDisposition1Value === 800440017) //Marketing
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440075,
+                    text: "Community Engagement"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440076,
+                    text: "Mergers and Acquisitions"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440073,
+                    text: "Promotion"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440074,
+                    text: "VyStar Website"
+                });
+
+            } else if (complaintDisposition1Value === 800440018) //Mortgages
+            {
+
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440162,
+                    text: "Application or Closing"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440163,
+                    text: "Delinquency"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440164,
+                    text: "Escrow"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440165,
+                    text: "Establishing Membership"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440166,
+                    text: "Foreclosure"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440167,
+                    text: "HELOC Application and Servicing"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440168,
+                    text: "HELOC Checks"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440169,
+                    text: "HELOC Debit Card"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440034,
+                    text: "Other"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440170,
+                    text: "Servicing"
+                });
+
+            }
+            else if (complaintDisposition1Value === 800440019) //Plastics
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440082,
+                    text: "Business Credit"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440081,
+                    text: "Business Debit"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440080,
+                    text: "Credit"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440079,
+                    text: "Debit"
+                });
+
+            } else if (complaintDisposition1Value === 800440020) //Transaction or Account
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440085,
+                    text: "ACH credit"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440086,
+                    text: "ACH Debit"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440089,
+                    text: "Business checking or savings"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440090,
+                    text: "Commercial Loan Application"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440091,
+                    text: "Commercial Loan on file"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440088,
+                    text: "Deceased member"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440084,
+                    text: "Deposit Promotion"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440087,
+                    text: "IRA account"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440095,
+                    text: "Late Loan"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440071,
+                    text: "Loan Payment"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440093,
+                    text: "locked account due to collections"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440092,
+                    text: "Locked account due to fraud"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440096,
+                    text: "Mobile check deposit"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440094,
+                    text: "Revoked plastic"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440083,
+                    text: "Wire Transfer"
+                });
+
+            }
+            else if (complaintDisposition1Value === 800440021) //Deposit Account
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440097,
+                    text: "Acct Takeover or Check Fraud"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440098,
+                    text: "ACH Fraud"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440099,
+                    text: "ACH Non-Fraud Issue"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440100,
+                    text: "ATM Fraud"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440101,
+                    text: "ATM Non-Fraud Dispute"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440102,
+                    text: "ATM Non-VyStar Foreign ATM"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440103,
+                    text: "Charged Off or Sold"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440104,
+                    text: "Check Issue Non-Fraud"
+                });
+
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440105,
+                    text: "Closed or Locked"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440106,
+                    text: "Contact Information"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440107,
+                    text: "Debit Card Fraud Dispute"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440108,
+                    text: "Debit Card Function or Issuance"
+                });
+
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440109,
+                    text: "Debit Card Non-Fraud Dispute"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440110,
+                    text: "Deceased All Other"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440111,
+                    text: "Deceased IRA"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440112,
+                    text: "Deposit Error"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440113,
+                    text: "Dormant or Escheated"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440197,
+                    text: "Fees or Interest"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440114,
+                    text: "Fraudulently Opened"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440115,
+                    text: "IRA or HSA Issue"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440116,
+                    text: "Legal Processing Issue"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440034,
+                    text: "Other"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440117,
+                    text: "Promotion"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440118,
+                    text: "Statements"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440119,
+                    text: "Wire Transfer"
+                });
+
+
+            }
+            else if (complaintDisposition1Value === 800440022) //Consumer Loan
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440120,
+                    text: "Application"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440121,
+                    text: "Bankruptcy or C&D"
+                });
+
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440122,
+                    text: "Branch"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440131,
+                    text: "Charged Off or Sold"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440124,
+                    text: "Collections Lock or Offset"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440125,
+                    text: "Contact Center"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440123,
+                    text: "CPI"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440126,
+                    text: "Credit Reporting"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440127,
+                    text: "Debt Protection (CUNA)"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440197,
+                    text: "Fees or Interest"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440128,
+                    text: "Hardship or Loan Modification"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440129,
+                    text: "Indirect Loan"
+                });
+
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440130,
+                    text: "IWS or Gap"
+                });
+
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440132,
+                    text: "Loan Funding"
+                });
+
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440133,
+                    text: "Loan Payment or Payoff"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440034,
+                    text: "Other"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440134,
+                    text: "Reposition"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440135,
+                    text: "Skip A Pay"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440136,
+                    text: "Title and Lien"
+                });
+
+            }
+            else if (complaintDisposition1Value === 800440023)	//Positive Service Experince
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440137,
+                    text: "All"
+                });
+            }
+            else if (complaintDisposition1Value === 800440026)	//Commercial Banking
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440160,
+                    text: "Credit Card"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440161,
+                    text: "Deposit Account"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440157,
+                    text: "Loan"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440034,
+                    text: "Other"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440158,
+                    text: "Real Estate"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440159,
+                    text: "Referral"
+                });
+
+            }
+            else if (complaintDisposition1Value === 800440024)	//Unpleasant Experience
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440147,
+                    text: "Branch Design"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440139,
+                    text: "Branch Service"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440140,
+                    text: "Branch Wait"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440138,
+                    text: "Contact Center Service/ Security"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440143,
+                    text: "Digital Voice Assistant"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440146,
+                    text: "Fraud Investigation Interaction"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440142,
+                    text: "Magic Touch"
+                });
+
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440145,
+                    text: "Member Solutions Interaction"
+                });
+
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440034,
+                    text: "Other"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440141,
+                    text: "Speed of Answer"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440144,
+                    text: "VyChat or Glia Experience"
+                });
+
+            }
+            else if (complaintDisposition1Value === 800440025)	//Support documents
+            {
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440155,
+                    text: "Community Engagement"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440156,
+                    text: "Marketing "
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440148,
+                    text: "Mergers and Acquisitions "
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440034,
+                    text: "Other"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440150,
+                    text: "VyStar Investment Services"
+                });
+
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440152,
+                    text: "VyStar at Work"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440153,
+                    text: "VyStar Foundation"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440149,
+                    text: "VyStar Insurance Agency"
+                });
+                formContext.getControl("vcu_complaintdisposition2").addOption({
+                    value: 800440151,
+                    text: "VyStar Title Agency"
+                });
+            }
+
+
+        }
+    }
+}
+
+function SetDepositionFieldMandatory(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var caseOrigin = formContext.getAttribute("caseorigincode");
+    if (caseOrigin && caseOrigin.getValue() && caseOrigin.getValue() === 800440004)
+        return;
+    var caseDeposition1 = formContext.getAttribute("vcu_casedisposition1");
+    if (caseDeposition1) {
+        caseDeposition1.setRequiredLevel("required")
+    }
+
+    var caseDeposition2 = formContext.getAttribute("vcu_casedisposition2");
+    if (caseDeposition2) {
+        caseDeposition2.setRequiredLevel("required")
+    }
+
+    var complaintDisposition1 = formContext.getAttribute("vcu_complaintdisposition1");
+    if (complaintDisposition1) {
+        complaintDisposition1.setRequiredLevel("required")
+    }
+    var complaintDisposition2 = formContext.getAttribute("vcu_complaintdisposition2");
+    if (complaintDisposition2) {
+        complaintDisposition2.setRequiredLevel("required")
+    }
+}
+
+function SetDueDateEditable(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var caseType = formContext.getAttribute("casetypecode");
+    if (caseType && caseType.getValue() && caseType.getValue() === 1)
+        return;
+    let hasRole = false;
+    let roles = Xrm.Utility.getGlobalContext().userSettings.roles;
+    roles.forEach(x => {
+        if (x.name === "[VyStar] | Compliance - Close and Reactivate Complaints") {
+            hasRole = true;
+        }
+    });
+    if (hasRole) {
+        formContext.getControl("resolveby").setDisabled(false);
+    }
+}
+
+function openQC() {
+    var entityFormOptions = {};
+    entityFormOptions["entityName"] = "vcu_businessgoal";
+    entityFormOptions["useQuickCreateForm"] = true;
+
+    // Set default values for the Contact form
+    var formParameters = {};
+    formParameters["vcu_name"] = "Sample";
+
+    // End of set lookup column
+
+    // Open the form.
+    Xrm.Navigation.openForm(entityFormOptions, formParameters).then(
+        function (success) {
+            console.log(success);
+        },
+        function (error) {
+            console.log(error);
+        });
+}
+function SetCompDespostion1(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var formLabel = formContext.ui.formSelector.getCurrentItem().getLabel();
+    if (formLabel === "Complaint") {
+        var complaintDisposition1 = formContext.getControl("vcu_complaintdisposition1");
+
+        if (complaintDisposition1 !== null) {
+            var compDepositonValueToBeRemoved = [800440011, 800440012, 800440013, 800440001, 800440006, 800440014, 800440000, 800440003, 800440010, 800440005, 800440017, 800440019, 800440004, 800440020]
+
+            // Clear current items
+            for (var i = 0; i < compDepositonValueToBeRemoved.length; i++) {
+                formContext.getControl("vcu_complaintdisposition1").removeOption(compDepositonValueToBeRemoved[i]);
+            }
+        }
+
+    }
+
+}
+
+function hasComplianceRole() {
+    let hasRole = false;
+    let roles = Xrm.Utility.getGlobalContext().userSettings.roles;
+
+    roles.forEach(x => {
+        if (x.name.toLowerCase() == "[VyStar] | Compliance - Close and Reactivate Complaints".toLowerCase()) {
+            hasRole = true;
+            return;
+        }
+    });
+    return hasRole;
+}
+
+function unlockFieldsForComplianceRole(executionContext) {
+    var formContext = executionContext.getFormContext();
+    if (hasComplianceRole()) {
+        formContext.getControl("resolveby").setDisabled(false);
+        formContext.getControl("caseorigincode").setDisabled(false);
+        formContext.getControl("vcu_sourceagency").setDisabled(false);
+    }
+}
+
+function limitCreditCardNumber() {
+    var creditCardNumber = Xrm.Page.getAttribute("vcu_ccnumber");
+
+    if (creditCardNumber != null) {
+        var maxLength = 16;
+        var value = creditCardNumber.getValue();
+
+        if (value != null) {
+            value = value.replace(/\D/g, '');
+            value = value.substring(0, maxLength);
+
+            creditCardNumber.setValue(value);
+        }
+    }
+}
+
+function showHideFieldsBasedOnCaseDisposition(executionContext) {
+    var formContext = executionContext.getFormContext();
+
+    var caseDisposition1 = formContext.getAttribute("vcu_casedisposition1").getValue();
+    var caseDisposition2 = formContext.getAttribute("vcu_casedisposition2").getValue();
+
+    // Define the field controls
+    var numberOfDelayDaysRequested = formContext.getControl("vcu_numberofdelaydaysrequested");
+    var feeAssessed = formContext.getControl("vcu_feeassessed");
+    var amount = formContext.getControl("vcu_amountcasedisposition");
+    var amountOfPaymentToBeAppliedToEscrowShortage = formContext.getControl("vcu_amountofpaymenttobeappliedtoescrowshortage");
+    var documentCopy = formContext.getControl("vcu_documentrequested");
+    var sendTo = formContext.getControl("vcu_sendto");
+    var sendVomTo = formContext.getControl("vcu_sendvomto");
+    var reasonForRequestForEscrowToBeReanalyzed = formContext.getControl("vcu_reasonforrequestforescrowtobereanalyzed");
+    var Achdefault = formContext.getControl("WebResource_ACHDefaultispaymentdate");
+    var waiveEscrowAccountNote = formContext.getControl("WebResource_WaiveEscrowAccountNote");
+    var achSetupNote = formContext.getControl("WebResource_AchSetupNote");
+    var dateOfThePayment = formContext.getControl("vcu_dateofthepaymentthatneedstobereversed");
+    var mortgageLoanNumber = formContext.getControl("vcu_mortgageloannumber");
+    var paymentDate = formContext.getControl("vcu_paymentdate");
+    var orginallyAppliedto = formContext.getControl("vcu_originallyappliedto");
+    var reApplyto = formContext.getControl("vcu_reapplyto");
+    var reason = formContext.getControl("vcu_reason");
+    var amountReversalCD = formContext.getControl("vcu_amount_mortgageservice");
+    //Mortgage Servicing
+    if (caseDisposition1 === 800440003) {
+        //ACH Change Draft Day
+        if (caseDisposition2 === 800440034) {
+            numberOfDelayDaysRequested.setVisible(true);
+            Achdefault.setVisible(true);
+
+            paymentDate.setVisible(false);
+            orginallyAppliedto.setVisible(false);
+            reApplyto.setVisible(false);
+            reason.setVisible(false);
+            feeAssessed.setVisible(false);
+            reason.setVisible(false);
+            amount.setVisible(false);
+            amountOfPaymentToBeAppliedToEscrowShortage.setVisible(false);
+            documentCopy.setVisible(false);
+            sendTo.setVisible(false);
+            documentCopy.setVisible(false);
+            sendTo.setVisible(false);
+            sendVomTo.setVisible(false);
+            reasonForRequestForEscrowToBeReanalyzed.setVisible(false);
+            waiveEscrowAccountNote.setVisible(false);
+            achSetupNote.setVisible(false);
+            dateOfThePayment.setVisible(false);
+            mortgageLoanNumber.setVisible(false);
+            amountReversalCD.setVisible(false);
+
+            amountReversalCD.getAttribute().setRequiredLevel("none");
+            numberOfDelayDaysRequested.getAttribute().setRequiredLevel("required");
+            amountOfPaymentToBeAppliedToEscrowShortage.getAttribute().setRequiredLevel("none");
+            documentCopy.getAttribute().setRequiredLevel("none");
+            sendTo.getAttribute().setRequiredLevel("none");
+            documentCopy.getAttribute().setRequiredLevel("none");
+            sendTo.getAttribute().setRequiredLevel("none");
+            sendVomTo.getAttribute().setRequiredLevel("none");
+            reasonForRequestForEscrowToBeReanalyzed.getAttribute().setRequiredLevel("none");
+            dateOfThePayment.getAttribute().setRequiredLevel("none");
+            mortgageLoanNumber.getAttribute().setRequiredLevel("none");
+            paymentDate.getAttribute().setRequiredLevel("none");
+            orginallyAppliedto.getAttribute().setRequiredLevel("none");
+            reApplyto.getAttribute().setRequiredLevel("none");
+        }
+
+
+        //Fee: Waive Late Fee
+        else if (caseDisposition2 === 800440039) {
+
+            feeAssessed.setVisible(true);
+            amount.setVisible(true);
+            reason.setVisible(true);
+
+            numberOfDelayDaysRequested.setVisible(false);
+            amountOfPaymentToBeAppliedToEscrowShortage.setVisible(false);
+            Achdefault.setVisible(false);
+            documentCopy.setVisible(false);
+            sendTo.setVisible(false);
+            documentCopy.setVisible(false);
+            sendTo.setVisible(false);
+            sendVomTo.setVisible(false);
+            reasonForRequestForEscrowToBeReanalyzed.setVisible(false);
+            waiveEscrowAccountNote.setVisible(false);
+            achSetupNote.setVisible(false);
+            dateOfThePayment.setVisible(false);
+            mortgageLoanNumber.setVisible(false);
+            paymentDate.setVisible(false);
+            orginallyAppliedto.setVisible(false);
+            reApplyto.setVisible(false);
+            reason.setVisible(false);
+            amountReversalCD.setVisible(false);
+
+            amountReversalCD.getAttribute().setRequiredLevel("none");
+            feeAssessed.getAttribute().setRequiredLevel("required");
+            amount.getAttribute().setRequiredLevel("required");
+            reason.getAttribute().setRequiredLevel("required");
+
+            numberOfDelayDaysRequested.getAttribute().setRequiredLevel("none");
+            amountOfPaymentToBeAppliedToEscrowShortage.getAttribute().setRequiredLevel("none");
+            documentCopy.getAttribute().setRequiredLevel("none");
+            sendTo.getAttribute().setRequiredLevel("none");
+            documentCopy.getAttribute().setRequiredLevel("none");
+            sendTo.getAttribute().setRequiredLevel("none");
+            sendVomTo.getAttribute().setRequiredLevel("none");
+            reasonForRequestForEscrowToBeReanalyzed.getAttribute().setRequiredLevel("none");
+            dateOfThePayment.getAttribute().setRequiredLevel("none");
+            mortgageLoanNumber.getAttribute().setRequiredLevel("none");
+            paymentDate.getAttribute().setRequiredLevel("none");
+            orginallyAppliedto.getAttribute().setRequiredLevel("none");
+            reApplyto.getAttribute().setRequiredLevel("none");
+        }
+        //Escrow: Shortage Payment
+        else if (caseDisposition2 === 800440038) {
+            amountOfPaymentToBeAppliedToEscrowShortage.setVisible(true);
+
+            feeAssessed.setVisible(false);
+            Achdefault.setVisible(false);
+            amount.setVisible(false);
+            numberOfDelayDaysRequested.setVisible(false);
+            documentCopy.setVisible(false);
+            sendTo.setVisible(false);
+            documentCopy.setVisible(false);
+            sendTo.setVisible(false);
+            sendVomTo.setVisible(false);
+            reasonForRequestForEscrowToBeReanalyzed.setVisible(false);
+            waiveEscrowAccountNote.setVisible(false);
+            achSetupNote.setVisible(false);
+            dateOfThePayment.setVisible(false);
+            mortgageLoanNumber.setVisible(false);
+            paymentDate.setVisible(false);
+            orginallyAppliedto.setVisible(false);
+            reApplyto.setVisible(false);
+            reason.setVisible(false);
+            amountReversalCD.setVisible(false);
+
+            amountReversalCD.getAttribute().setRequiredLevel("none");
+            amountOfPaymentToBeAppliedToEscrowShortage.getAttribute().setRequiredLevel("required");
+
+            numberOfDelayDaysRequested.getAttribute().setRequiredLevel("none");
+            reason.getAttribute().setRequiredLevel("none");
+            feeAssessed.getAttribute().setRequiredLevel("none");
+            amount.getAttribute().setRequiredLevel("none");
+            documentCopy.getAttribute().setRequiredLevel("none");
+            sendTo.getAttribute().setRequiredLevel("none");
+            sendVomTo.getAttribute().setRequiredLevel("none");
+            reasonForRequestForEscrowToBeReanalyzed.getAttribute().setRequiredLevel("none");
+            dateOfThePayment.getAttribute().setRequiredLevel("none");
+            mortgageLoanNumber.getAttribute().setRequiredLevel("none");
+            paymentDate.getAttribute().setRequiredLevel("none");
+            orginallyAppliedto.getAttribute().setRequiredLevel("none");
+            reApplyto.getAttribute().setRequiredLevel("none");
+        }
+        //Document Copy
+        else if (caseDisposition2 === 800440035) {
+            documentCopy.setVisible(true);
+            sendTo.setVisible(true);
+
+            amountOfPaymentToBeAppliedToEscrowShortage.setVisible(false);
+            reason.setVisible(false);
+            feeAssessed.setVisible(false);
+            Achdefault.setVisible(false);
+            amount.setVisible(false);
+            numberOfDelayDaysRequested.setVisible(false);
+            sendVomTo.setVisible(false);
+            reasonForRequestForEscrowToBeReanalyzed.setVisible(false);
+            waiveEscrowAccountNote.setVisible(false);
+            achSetupNote.setVisible(false);
+            dateOfThePayment.setVisible(false);
+            mortgageLoanNumber.setVisible(false);
+            paymentDate.setVisible(false);
+            orginallyAppliedto.setVisible(false);
+            reApplyto.setVisible(false);
+            reason.setVisible(false);
+
+            documentCopy.getAttribute().setRequiredLevel("required");
+            sendTo.getAttribute().setRequiredLevel("required");
+
+            amountOfPaymentToBeAppliedToEscrowShortage.getAttribute().setRequiredLevel("none");
+            numberOfDelayDaysRequested.getAttribute().setRequiredLevel("none");
+            reason.getAttribute().setRequiredLevel("none");
+            feeAssessed.getAttribute().setRequiredLevel("none");
+            amount.getAttribute().setRequiredLevel("none");
+            sendVomTo.getAttribute().setRequiredLevel("none");
+            reasonForRequestForEscrowToBeReanalyzed.getAttribute().setRequiredLevel("none");
+            dateOfThePayment.getAttribute().setRequiredLevel("none");
+            mortgageLoanNumber.getAttribute().setRequiredLevel("none");
+            paymentDate.getAttribute().setRequiredLevel("none");
+            orginallyAppliedto.getAttribute().setRequiredLevel("none");
+            reApplyto.getAttribute().setRequiredLevel("none");
+        }
+        //Verification of Mortgage
+        else if (caseDisposition2 === 800440051) {
+            sendVomTo.setVisible(true);
+
+            amountOfPaymentToBeAppliedToEscrowShortage.setVisible(false);
+            reason.setVisible(false);
+            feeAssessed.setVisible(false);
+            Achdefault.setVisible(false);
+            amount.setVisible(false);
+            numberOfDelayDaysRequested.setVisible(false);
+            documentCopy.setVisible(false);
+            sendTo.setVisible(false);
+            reasonForRequestForEscrowToBeReanalyzed.setVisible(false);
+            waiveEscrowAccountNote.setVisible(false);
+            achSetupNote.setVisible(false);
+            dateOfThePayment.setVisible(false);
+            mortgageLoanNumber.setVisible(false);
+            paymentDate.setVisible(false);
+            orginallyAppliedto.setVisible(false);
+            reApplyto.setVisible(false);
+            amountReversalCD.setVisible(false);
+
+            amountReversalCD.getAttribute().setRequiredLevel("none");
+            sendVomTo.getAttribute().setRequiredLevel("required");
+
+            amountOfPaymentToBeAppliedToEscrowShortage.getAttribute().setRequiredLevel("none");
+            numberOfDelayDaysRequested.getAttribute().setRequiredLevel("none");
+            reason.getAttribute().setRequiredLevel("none");
+            feeAssessed.getAttribute().setRequiredLevel("none");
+            amount.getAttribute().setRequiredLevel("none");
+            documentCopy.getAttribute().setRequiredLevel("none");
+            sendTo.getAttribute().setRequiredLevel("none");
+            reasonForRequestForEscrowToBeReanalyzed.getAttribute().setRequiredLevel("none");
+            dateOfThePayment.getAttribute().setRequiredLevel("none");
+            mortgageLoanNumber.getAttribute().setRequiredLevel("none");
+            paymentDate.getAttribute().setRequiredLevel("none");
+            orginallyAppliedto.getAttribute().setRequiredLevel("none");
+            reApplyto.getAttribute().setRequiredLevel("none");
+            reason.getAttribute().setRequiredLevel("none");
+        }
+        //Escrow Reanalyze loan
+        else if (caseDisposition2 === 800440036) {
+
+            reasonForRequestForEscrowToBeReanalyzed.setVisible(true);
+
+            sendVomTo.setVisible(false);
+            amountOfPaymentToBeAppliedToEscrowShortage.setVisible(false);
+            reason.setVisible(false);
+            feeAssessed.setVisible(false);
+            Achdefault.setVisible(false);
+            amount.setVisible(false);
+            numberOfDelayDaysRequested.setVisible(false);
+            documentCopy.setVisible(false);
+            sendTo.setVisible(false);
+            waiveEscrowAccountNote.setVisible(false);
+            achSetupNote.setVisible(false);
+            dateOfThePayment.setVisible(false);
+            mortgageLoanNumber.setVisible(false);
+            paymentDate.setVisible(false);
+            orginallyAppliedto.setVisible(false);
+            reApplyto.setVisible(false);
+            reason.setVisible(false);
+			amountReversalCD.setVisible(false);
+
+            amountReversalCD.getAttribute().setRequiredLevel("none");
+
+            reasonForRequestForEscrowToBeReanalyzed.getAttribute().setRequiredLevel("required");
+
+            sendVomTo.getAttribute().setRequiredLevel("none");
+            amountOfPaymentToBeAppliedToEscrowShortage.getAttribute().setRequiredLevel("none");
+            numberOfDelayDaysRequested.getAttribute().setRequiredLevel("none");
+            reason.getAttribute().setRequiredLevel("none");
+            feeAssessed.getAttribute().setRequiredLevel("none");
+            amount.getAttribute().setRequiredLevel("none");
+            documentCopy.getAttribute().setRequiredLevel("none");
+            sendTo.getAttribute().setRequiredLevel("none");
+            dateOfThePayment.getAttribute().setRequiredLevel("none");
+            mortgageLoanNumber.getAttribute().setRequiredLevel("none");
+            paymentDate.getAttribute().setRequiredLevel("none");
+            orginallyAppliedto.getAttribute().setRequiredLevel("none");
+            reApplyto.getAttribute().setRequiredLevel("none");
+        }
+        //Waive Escrow Account
+        else if (caseDisposition2 === 800440037) {
+            waiveEscrowAccountNote.setVisible(true);
+
+            reasonForRequestForEscrowToBeReanalyzed.setVisible(false);
+            sendVomTo.setVisible(false);
+            amountOfPaymentToBeAppliedToEscrowShortage.setVisible(false);
+            reason.setVisible(false);
+            feeAssessed.setVisible(false);
+            Achdefault.setVisible(false);
+            amount.setVisible(false);
+            numberOfDelayDaysRequested.setVisible(false);
+            documentCopy.setVisible(false);
+            sendTo.setVisible(false);
+            achSetupNote.setVisible(false);
+            dateOfThePayment.setVisible(false);
+            mortgageLoanNumber.setVisible(false);
+            paymentDate.setVisible(false);
+            orginallyAppliedto.setVisible(false);
+            reApplyto.setVisible(false);
+            reason.setVisible(false);
+            amountReversalCD.setVisible(false);
+
+            amountReversalCD.getAttribute().setRequiredLevel("none");
+
+            reasonForRequestForEscrowToBeReanalyzed.getAttribute().setRequiredLevel("none");
+            sendVomTo.getAttribute().setRequiredLevel("none");
+            amountOfPaymentToBeAppliedToEscrowShortage.getAttribute().setRequiredLevel("none");
+            numberOfDelayDaysRequested.getAttribute().setRequiredLevel("none");
+            reason.getAttribute().setRequiredLevel("none");
+            feeAssessed.getAttribute().setRequiredLevel("none");
+            amount.getAttribute().setRequiredLevel("none");
+            documentCopy.getAttribute().setRequiredLevel("none");
+            sendTo.getAttribute().setRequiredLevel("none");
+            dateOfThePayment.getAttribute().setRequiredLevel("none");
+            mortgageLoanNumber.getAttribute().setRequiredLevel("none");
+            paymentDate.getAttribute().setRequiredLevel("none");
+            orginallyAppliedto.getAttribute().setRequiredLevel("none");
+            reApplyto.getAttribute().setRequiredLevel("none");
+        }
+
+        //ACH Setup  
+        else if (caseDisposition2 === 800440033) {
+
+            achSetupNote.setVisible(true);
+
+            reasonForRequestForEscrowToBeReanalyzed.setVisible(false);
+            sendVomTo.setVisible(false);
+            amountOfPaymentToBeAppliedToEscrowShortage.setVisible(false);
+            reason.setVisible(false);
+            feeAssessed.setVisible(false);
+            Achdefault.setVisible(false);
+            amount.setVisible(false);
+            numberOfDelayDaysRequested.setVisible(false);
+            documentCopy.setVisible(false);
+            sendTo.setVisible(false);
+            waiveEscrowAccountNote.setVisible(false);
+            dateOfThePayment.setVisible(false);
+            mortgageLoanNumber.setVisible(false);
+            paymentDate.setVisible(false);
+            orginallyAppliedto.setVisible(false);
+            reApplyto.setVisible(false);
+            reason.setVisible(false);
+			amountReversalCD.setVisible(false);
+
+            amountReversalCD.getAttribute().setRequiredLevel("none");
+
+            reasonForRequestForEscrowToBeReanalyzed.getAttribute().setRequiredLevel("none");
+            sendVomTo.getAttribute().setRequiredLevel("none");
+            amountOfPaymentToBeAppliedToEscrowShortage.getAttribute().setRequiredLevel("none");
+            numberOfDelayDaysRequested.getAttribute().setRequiredLevel("none");
+            reason.getAttribute().setRequiredLevel("none");
+            feeAssessed.getAttribute().setRequiredLevel("none");
+            amount.getAttribute().setRequiredLevel("none");
+            documentCopy.getAttribute().setRequiredLevel("none");
+            sendTo.getAttribute().setRequiredLevel("none");
+            dateOfThePayment.getAttribute().setRequiredLevel("none");
+            mortgageLoanNumber.getAttribute().setRequiredLevel("none");
+            paymentDate.getAttribute().setRequiredLevel("none");
+            orginallyAppliedto.getAttribute().setRequiredLevel("none");
+            reApplyto.getAttribute().setRequiredLevel("none");
+
+        }
+        //Return Check payments (ACH and Check)
+        else if (caseDisposition2 === 800440050) {
+            dateOfThePayment.setVisible(true);
+            mortgageLoanNumber.setVisible(true);
+
+            achSetupNote.setVisible(false);
+            reasonForRequestForEscrowToBeReanalyzed.setVisible(false);
+            sendVomTo.setVisible(false);
+            amountOfPaymentToBeAppliedToEscrowShortage.setVisible(false);
+            reason.setVisible(false);
+            feeAssessed.setVisible(false);
+            Achdefault.setVisible(false);
+            amount.setVisible(false);
+            numberOfDelayDaysRequested.setVisible(false);
+            documentCopy.setVisible(false);
+            sendTo.setVisible(false);
+            waiveEscrowAccountNote.setVisible(false);
+            paymentDate.setVisible(false);
+            orginallyAppliedto.setVisible(false);
+            reApplyto.setVisible(false);
+            reason.setVisible(false);
+            amountReversalCD.setVisible(false);
+
+            amountReversalCD.getAttribute().setRequiredLevel("none");
+
+            dateOfThePayment.getAttribute().setRequiredLevel("required");
+            mortgageLoanNumber.getAttribute().setRequiredLevel("required");
+
+
+            reasonForRequestForEscrowToBeReanalyzed.getAttribute().setRequiredLevel("none");
+            sendVomTo.getAttribute().setRequiredLevel("none");
+            amountOfPaymentToBeAppliedToEscrowShortage.getAttribute().setRequiredLevel("none");
+            numberOfDelayDaysRequested.getAttribute().setRequiredLevel("none");
+            reason.getAttribute().setRequiredLevel("none");
+            feeAssessed.getAttribute().setRequiredLevel("none");
+            amount.getAttribute().setRequiredLevel("none");
+            documentCopy.getAttribute().setRequiredLevel("none");
+            sendTo.getAttribute().setRequiredLevel("none");
+            paymentDate.getAttribute().setRequiredLevel("none");
+            orginallyAppliedto.getAttribute().setRequiredLevel("none");
+            reApplyto.getAttribute().setRequiredLevel("none");
+
+        }
+        //Payment Issue Or Reversal
+        else if (caseDisposition2 === 800440049) {
+
+            paymentDate.setVisible(true);
+            orginallyAppliedto.setVisible(true);
+            reApplyto.setVisible(true);
+            reason.setVisible(true);
+            amountReversalCD.setVisible(true);
+
+            dateOfThePayment.setVisible(false);
+            mortgageLoanNumber.setVisible(false);
+            achSetupNote.setVisible(false);
+            reasonForRequestForEscrowToBeReanalyzed.setVisible(false);
+            sendVomTo.setVisible(false);
+            amountOfPaymentToBeAppliedToEscrowShortage.setVisible(false);
+            feeAssessed.setVisible(false);
+            Achdefault.setVisible(false);
+            amount.setVisible(false);
+            numberOfDelayDaysRequested.setVisible(false);
+            documentCopy.setVisible(false);
+            sendTo.setVisible(false);
+            waiveEscrowAccountNote.setVisible(false);
+
+            paymentDate.getAttribute().setRequiredLevel("required");
+            orginallyAppliedto.getAttribute().setRequiredLevel("required");
+            reApplyto.getAttribute().setRequiredLevel("required");
+            reason.getAttribute().setRequiredLevel("required");
+            amountReversalCD.getAttribute().setRequiredLevel("required");
+
+            dateOfThePayment.getAttribute().setRequiredLevel("none");
+            mortgageLoanNumber.getAttribute().setRequiredLevel("none");
+            reasonForRequestForEscrowToBeReanalyzed.getAttribute().setRequiredLevel("none");
+            sendVomTo.getAttribute().setRequiredLevel("none");
+            amountOfPaymentToBeAppliedToEscrowShortage.getAttribute().setRequiredLevel("none");
+            numberOfDelayDaysRequested.getAttribute().setRequiredLevel("none");
+            feeAssessed.getAttribute().setRequiredLevel("none");
+            amount.getAttribute().setRequiredLevel("none");
+            documentCopy.getAttribute().setRequiredLevel("none");
+            sendTo.getAttribute().setRequiredLevel("none");
+
+
+        }
+
+
+        else {
+            numberOfDelayDaysRequested.setVisible(false);
+            feeAssessed.setVisible(false);
+            amountOfPaymentToBeAppliedToEscrowShortage.setVisible(false);
+            amount.setVisible(false);
+            Achdefault.setVisible(false);
+            documentCopy.setVisible(false);
+            sendTo.setVisible(false);
+            sendVomTo.setVisible(false);
+            reasonForRequestForEscrowToBeReanalyzed.setVisible(false);
+            waiveEscrowAccountNote.setVisible(false);
+            achSetupNote.setVisible(false);
+            dateOfThePayment.setVisible(false);
+            mortgageLoanNumber.setVisible(false);
+            paymentDate.setVisible(false);
+            orginallyAppliedto.setVisible(false);
+            reApplyto.setVisible(false);
+            reason.setVisible(false);
+            amountReversalCD.setVisible(false);
+
+            amountReversalCD.getAttribute().setRequiredLevel("none");
+            paymentDate.getAttribute().setRequiredLevel("none");
+            orginallyAppliedto.getAttribute().setRequiredLevel("none");
+            reApplyto.getAttribute().setRequiredLevel("none");
+            reason.getAttribute().setRequiredLevel("none");
+            amountOfPaymentToBeAppliedToEscrowShortage.getAttribute().setRequiredLevel("none");
+            numberOfDelayDaysRequested.getAttribute().setRequiredLevel("none");
+            reason.getAttribute().setRequiredLevel("none");
+            feeAssessed.getAttribute().setRequiredLevel("none");
+            amount.getAttribute().setRequiredLevel("none");
+            documentCopy.getAttribute().setRequiredLevel("none");
+            sendTo.getAttribute().setRequiredLevel("none");
+            documentCopy.getAttribute().setRequiredLevel("none");
+            sendTo.getAttribute().setRequiredLevel("none");
+            sendVomTo.getAttribute().setRequiredLevel("none");
+            reasonForRequestForEscrowToBeReanalyzed.getAttribute().setRequiredLevel("none");
+            dateOfThePayment.getAttribute().setRequiredLevel("none");
+            mortgageLoanNumber.getAttribute().setRequiredLevel("none");
+
+        }
+    }
+}
+
+function HideShowFieldsMortgageServicing(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var formLabel = formContext.ui.formSelector.getCurrentItem().getLabel();
+    if (formLabel === "Case") {
+        var caseDisposition1 = formContext.getControl("vcu_casedisposition1");
+        var caseDisposition2 = formContext.getControl("vcu_casedisposition2");
+
+        if (caseDisposition1 !== null && caseDisposition2 != null) {
+            var caseDisposition1Value = formContext.getAttribute("vcu_casedisposition1").getValue();
+            var caseDisposition2Value = formContext.getAttribute("vcu_casedisposition2").getValue();
+
+            if (caseDisposition1Value == 800440003) { //Mortgage Servicing
+                if (caseDisposition2Value == 800440034) { // ACH Change Draft Day
+                    HideShowFields(formContext, ["vcu_numberofdelaydaysrequested", "WebResource_ACHDefaultispaymentdate", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440039) { //Waive Late Fee
+                    HideShowFields(formContext, ["vcu_feeassessed", "vcu_amountofpaymenttobeappliedtoescrowshortage","vcu_reason", "vcu_amountcasedisposition", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440038) { //Escrow: Shortage Payment
+                    HideShowFields(formContext, ["vcu_amountofpaymenttobeappliedtoescrowshortage", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440035) { //Document Copy
+                    HideShowFields(formContext, ["vcu_documentrequested", "vcu_sendto", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440051) { //Verification of Mortgage
+                    HideShowFields(formContext, ["vcu_sendvomto", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440036) { //Escrow Reanalyze loan
+                    HideShowFields(formContext, ["vcu_reasonforrequestforescrowtobereanalyzed", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440037) { //Waive Escrow Account
+                    HideShowFields(formContext, ["WebResource_WaiveEscrowAccountNote", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440033) { //ACH Setup 
+                    HideShowFields(formContext, ["WebResource_AchSetupNote", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440050) { //Return Check payments (ACH and Check)
+                    HideShowFields(formContext, ["vcu_dateofthepaymentthatneedstobereversed", "vcu_mortgageloannumber", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440049) { //Payment Issue Or Reversal
+                    HideShowFields(formContext, ["vcu_paymentdate", "vcu_amount_mortgageservice", "vcu_originallyappliedto", "vcu_reapplyto", "vcu_reason", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount", "vcu_amountcasedisposition"]);
+                }
+                else if (caseDisposition2Value == 800440040) { //Hardship Inquiry
+                    HideShowFields(formContext, ["vcu_reasonforhardship", "vcu_member", "vcu_mailedoremailed", "vcu_hardshipapplicationshouldbesentto", "vcu_ifsiiauthorizedthirdpartyname", "vcu_ifsiiauthorizedthirdpartybestcontact", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440041) { //Hazard Claim Greater than 25k
+                    HideShowFields(formContext, ["WebResource_HazardClaimGreaterthan25kNote", "vcu_typeofdamage", "vcu_contractorselectedforrepairs", "vcu_amountofclaimproceeds", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440022) { //Other
+                    HideShowFields(formContext, ["WebResource_Providedetailedsummaryofrequest", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440047) { //PMI Request To Waive
+                    HideShowFields(formContext, ["WebResource_PMIRequestToWaiveNote", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440046) { //Payment History Request
+                    HideShowFields(formContext, ["vcu_numberofmonthsrequested", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440044) { //Mortgage Payment Inquiry 
+                    HideShowFields(formContext, ["WebResource_MortgagePaymentInquiryNote", "vcu_paymentinquirydescription", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440043) { //Insurance Research Request  
+                    HideShowFields(formContext, ["WebResource_InsuranceResearchRequestNote", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440042) { //Insurance Refund  
+                    HideShowFields(formContext, ["vcu_applyinsurancerefundtoescrow", "vcu_amountofinsurancerefundtoapplytoescrow", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440045) { //Payoff Quote Request  
+                    HideShowFields(formContext, ["vcu_sendpayoffquoteto", "vcu_payoffgoodthroughdatemax30days", "vcu_loanpaidinfullorlineofcreditleftopen", "vcu_orpaiddowntozerobalanceandcreditleftopen", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount"]);
+                }
+                else if (caseDisposition2Value == 800440052) { //Check Stop Payment - VyStar Disbursement 
+                    HideShowFields(formContext, ["vcu_approximatedateofthecheck","vcu_type", "vcu_checkamountmortgage", "vcu_selectmortgageaccount", "vcu_mortgageaccountnumber"]);
+                }
+                else if (caseDisposition2Value == 800440048) { //Check Stop Payment - HELOC
+                    HideShowFields(formContext, ["vcu_checknumberornumbersforthestoppayment","vcu_type", "vcu_selectmortgageaccount", "vcu_mortgageaccountnumber"]);
+                }
+                setMortgageAccount(formContext);
+            }
+        }
+    }
+}
+
+function HideShowFields(formContext, showFields) {
+    var allFields = ["vcu_approximatedateofthecheck", "vcu_type", "vcu_amount_mortgageservice", "vcu_checkamountmortgage", "vcu_checkamountcurrency", "vcu_checknumberornumbersforthestoppayment", "vcu_numberofdelaydaysrequested", "vcu_feeassessed", "vcu_reason", "vcu_amountofpaymenttobeappliedtoescrowshortage", "vcu_amountcasedisposition", "vcu_documentrequested", "vcu_sendto", "vcu_sendvomto", "vcu_reasonforrequestforescrowtobereanalyzed", "vcu_dateofthepaymentthatneedstobereversed", "vcu_mortgageloannumber", "vcu_paymentdate", "vcu_originallyappliedto", "vcu_reapplyto", "vcu_reasonforhardship", "vcu_member", "vcu_mailedoremailed", "vcu_hardshipapplicationshouldbesentto", "vcu_ifsiiauthorizedthirdpartyname", "vcu_ifsiiauthorizedthirdpartybestcontact", "vcu_typeofdamage", "vcu_contractorselectedforrepairs", "vcu_amountofclaimproceeds", "vcu_numberofmonthsrequested", "vcu_paymentinquirydescription", "vcu_applyinsurancerefundtoescrow", "vcu_amountofinsurancerefundtoapplytoescrow", "vcu_sendpayoffquoteto", "vcu_payoffgoodthroughdatemax30days", "vcu_loanpaidinfullorlineofcreditleftopen", "vcu_mortgageaccountnumber", "vcu_selectmortgageaccount", "vcu_orpaiddowntozerobalanceandcreditleftopen", "WebResource_ACHDefaultispaymentdate", "WebResource_WaiveEscrowAccountNote", "WebResource_AchSetupNote", "WebResource_HazardClaimGreaterthan25kNote", "WebResource_Providedetailedsummaryofrequest", "WebResource_PMIRequestToWaiveNote", "WebResource_MortgagePaymentInquiryNote", "WebResource_InsuranceResearchRequestNote"];
+
+    allFields.forEach(field => {
+        if (formContext.getControl(field) != null) {
+            if (showFields.includes(field)) {
+                formContext.getControl(field).setVisible(true);
+                if (formContext.getAttribute(field) != null) {
+                    formContext.getAttribute(field).setRequiredLevel("required");
+                }
+            }
+            else {
+                formContext.getControl(field).setVisible(false);
+                if (formContext.getAttribute(field) != null) {
+                    formContext.getAttribute(field).setRequiredLevel("none");
+                }
+            }
+        }
+    });
+}
+
+function NumericValidation(executionContext, fieldName) {
+    var formContext = executionContext.getFormContext();
+    if (formContext.getAttribute(fieldName).getValue() != null && formContext.getAttribute(fieldName).getValue() != undefined) {
+        var rexp = /^[0-9]*$/;
+        if (!rexp.test(formContext.getAttribute(fieldName).getValue())) {
+            formContext.getControl(fieldName).setNotification("Please enter only Numeric Value.", "FieldNotificationId");
+            formContext.getAttribute(fieldName).setValue(null);
+        }
+        else {
+            formContext.getControl(fieldName).clearNotification("FieldNotificationId");
+        }
+    }
+}
+
+function Check30Days(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var selectedDate = formContext.getAttribute("vcu_payoffgoodthroughdatemax30days").getValue();
+    if (selectedDate != null && selectedDate != undefined) {
+        var currentDate = new Date();
+        var timeDifference = selectedDate.getTime() - currentDate.getTime();
+        var daysDifference = timeDifference / (1000 * 3600 * 24);
+
+        if (daysDifference > 30) {
+            //formContext.getAttribute("vcu_payoffgoodthroughdatemax30days").setValue(null);
+            formContext.getControl("vcu_payoffgoodthroughdatemax30days").setNotification("Please enter value less than or equal to 30 days.", "Check30DaysNotification");
+        }
+        else if (selectedDate < currentDate) {
+            //formContext.getAttribute("vcu_payoffgoodthroughdatemax30days").setValue(null);
+            formContext.getControl("vcu_payoffgoodthroughdatemax30days").setNotification("Please enter value greater than current date.", "Check30DaysNotification");
+        }
+        else {
+            formContext.getControl("vcu_payoffgoodthroughdatemax30days").clearNotification("Check30DaysNotification");
+        }
+    }
+}
+
+function setMortgageAccount(formContext) {
+    var customer = formContext.getAttribute("customerid");
+    if (customer != null && customer.getValue() != null) {
+        Xrm.WebApi.online.retrieveMultipleRecords("vcu_iceaccountinformation", "?$filter=_vcu_member_value eq '" + customer.getValue()[0].id + "'").then(
+            function success(results) {
+                if (results.entities.length == 1) {
+                    var lookupValue = new Array();
+                    lookupValue[0] = new Object();
+                    lookupValue[0].id = results.entities[0]["vcu_iceaccountinformationid"];
+                    lookupValue[0].name = results.entities[0]["vcu_name"];
+                    lookupValue[0].entityType = "vcu_iceaccountinformation";
+                    formContext.getAttribute("vcu_selectmortgageaccount").setValue(lookupValue);
+                    formContext.getAttribute("vcu_mortgageaccountnumber").setValue(results.entities[0]["vcu_iceaccountnumber"]);
+                }
+
+            },
+            function (error) {
+                Xrm.Utility.alertDialog(error.message);
+            }
+        );
+    }
+}
+
+function onChangeMortgageAcc(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var mortgageAcc = formContext.getAttribute("vcu_selectmortgageaccount");
+    if (mortgageAcc != null && mortgageAcc.getValue() != null) {
+        Xrm.WebApi.retrieveRecord("vcu_iceaccountinformation", mortgageAcc.getValue()[0].id, "?$select=vcu_iceaccountnumber").then(
+            function success(result) {
+                formContext.getAttribute("vcu_mortgageaccountnumber").setValue(result.vcu_iceaccountnumber);
+            },
+            function (error) {
+                console.log(error.message);
+            }
+        );
+    }
+    else {
+        formContext.getAttribute("vcu_mortgageaccountnumber").setValue(null);
+    }
+}
+
+function HideShowMemberDetails(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var formLabel = formContext.ui.formSelector.getCurrentItem().getLabel();
+    if (formLabel === "Case") {
+        var caseDisposition1 = formContext.getControl("vcu_casedisposition1");
+        // var caseDisposition2 = formContext.getControl("vcu_casedisposition2");
+
+        // if (caseDisposition1 !== null && caseDisposition2 != null) {
+        if (caseDisposition1 !== null) {
+            var caseDisposition1Value = formContext.getAttribute("vcu_casedisposition1").getValue();
+            //var caseDisposition2Value = formContext.getAttribute("vcu_casedisposition2").getValue();
+
+            if (caseDisposition1Value == 800440006) { //Credit Card
+                formContext.ui.quickForms.get("Member_CIF").setVisible(true);
+            }
+            else {
+                formContext.ui.quickForms.get("Member_CIF").setVisible(false);
+            }
+        }
+    }
+}
+
+function StringValidation(executionContext, fieldName) {
+    var formContext = executionContext.getFormContext();
+    if (formContext.getAttribute(fieldName).getValue() != null && formContext.getAttribute(fieldName).getValue() != undefined) {
+        var rexp = /^[a-zA-Z\s]*$/;
+        if (!rexp.test(formContext.getAttribute(fieldName).getValue())) {
+            formContext.getControl(fieldName).setNotification("Please enter only String Value.", "FieldNotificationIdString");
+            formContext.getAttribute(fieldName).setValue(null);
+        }
+        else {
+            formContext.getControl(fieldName).clearNotification("FieldNotificationIdString");
+        }
+    }
+}
+
+function setCreditCard(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var customer = formContext.getAttribute("customerid");
+    var caseDisposition1 = formContext.getControl("vcu_casedisposition1");
+    var caseDisposition2 = formContext.getControl("vcu_casedisposition2");
+    var selectPaymetAdjustment = formContext.getControl("vcu_selectpaymentoradjustment");
+
+    if (caseDisposition1 !== null && caseDisposition2 != null && selectPaymetAdjustment != null) {
+        var caseDisposition1Value = formContext.getAttribute("vcu_casedisposition1").getValue();
+        var caseDisposition2Value = formContext.getAttribute("vcu_casedisposition2").getValue();
+        var selectPaymetAdjustmentValue = formContext.getAttribute("vcu_selectpaymentoradjustment").getValue();
+        if (customer != null && caseDisposition1Value != null && caseDisposition1Value == 800440006 && caseDisposition2Value != null && caseDisposition2Value == 800440027 && selectPaymetAdjustmentValue != null && selectPaymetAdjustmentValue == 800440004) {
+            Xrm.WebApi.online.retrieveMultipleRecords("vcu_creditcards", "?$filter=_vcu_member_value eq '" + customer.getValue()[0].id + "'").then(
+                function success(results) {
+                    if (results.entities.length == 1) {
+                        formContext.getAttribute("vcu_creditcardpaymentpostedto1").setValue(results.entities[0]["vcu_creditcardnumber"]);
+                    }
+
+                },
+                function (error) {
+                    Xrm.Utility.alertDialog(error.message);
+                }
+            );
+        }
+    }
+}
+
+function HideShowCreditCardAuthUserFields(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var formLabel = formContext.ui.formSelector.getCurrentItem().getLabel();
+    if (formLabel === "Case") {
+        var caseDisposition1 = formContext.getControl("vcu_casedisposition1");
+        var caseDisposition2 = formContext.getControl("vcu_casedisposition2");
+
+        if (caseDisposition1 !== null && caseDisposition2 != null) {
+            var caseDisposition1Value = formContext.getAttribute("vcu_casedisposition1").getValue();
+            var caseDisposition2Value = formContext.getAttribute("vcu_casedisposition2").getValue();
+            var allFields = ["vcu_ofacreviewed", "vcu_methodofdelivery", "vcu_requesttype", "vcu_isauthorizeduseraddresssameasprimaryaddress", "vcu_isauthorizeduseravystarmember"];
+            if (caseDisposition1Value == 800440006 && caseDisposition2Value == 800440029) { //Credit Card // Authorised User Form
+
+                allFields.forEach(field => {
+                    if (formContext.getControl(field) != null) {
+                        formContext.getControl(field).setVisible(true);
+                        if (formContext.getAttribute(field) != null) {
+                            formContext.getAttribute(field).setRequiredLevel("required");
+                        }
+                    }
+                });
+            }
+            else {
+                allFields.forEach(field => {
+                    formContext.getControl(field).setVisible(false);
+                    if (formContext.getAttribute(field) != null) {
+                        formContext.getAttribute(field).setRequiredLevel("none");
+                    }
+                });
+            }
+        }
+    }
+}
+
+function HideShowFieldsIfAuthUserVystarMember(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var formLabel = formContext.ui.formSelector.getCurrentItem().getLabel();
+    if (formLabel === "Case") {
+        var caseDisposition1 = formContext.getControl("vcu_casedisposition1");
+        var caseDisposition2 = formContext.getControl("vcu_casedisposition2");
+
+        if (caseDisposition1 !== null && caseDisposition2 != null) {
+            var caseDisposition1Value = formContext.getAttribute("vcu_casedisposition1").getValue();
+            var caseDisposition2Value = formContext.getAttribute("vcu_casedisposition2").getValue();
+            if (caseDisposition1Value == 800440006 && caseDisposition2Value == 800440029) { //Credit Card // Authorised User Form
+                var isAuthUserVystarMember = formContext.getAttribute("vcu_isauthorizeduseravystarmember");
+                if (isAuthUserVystarMember != null && isAuthUserVystarMember.getValue() == true) { // Is AUth User Vystar Member
+                    formContext.getControl("vcu_authorizedusersname").setVisible(true);
+                    formContext.getAttribute("vcu_authorizedusersname").setRequiredLevel("required");
+                    formContext.getControl("vcu_authorizedusername").setVisible(false);
+                    formContext.getAttribute("vcu_authorizedusername").setRequiredLevel("none");
+                    var customer = formContext.getAttribute("customerid").getValue();
+                    if (customer != null && customer[0].entityType == "contact") {
+                        var lookupValue = new Array();
+                        lookupValue[0] = new Object();
+                        lookupValue[0].id = customer[0].id;
+                        lookupValue[0].name = customer[0].name;
+                        lookupValue[0].entityType = customer[0].entityType;
+                        formContext.getAttribute("vcu_authorizedusersname").setValue(lookupValue);
+                    }
+
+                }
+                else if (isAuthUserVystarMember != null && formContext.getAttribute("vcu_isauthorizeduseravystarmember").getValue() == false) {
+                    formContext.getControl("vcu_authorizedusername").setVisible(true);
+                    formContext.getAttribute("vcu_authorizedusername").setRequiredLevel("required");
+                    formContext.getControl("vcu_authorizedusersname").setVisible(false);
+                    formContext.getAttribute("vcu_authorizedusersname").setRequiredLevel("none");
+                    formContext.getAttribute("vcu_authorizedusersname").setValue(null);
+                }
+            }
+        }
+    }
+}
+
+function HideShowFieldsIfAuthUserAddressSameAsPrimary(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var formLabel = formContext.ui.formSelector.getCurrentItem().getLabel();
+
+    if (formLabel === "Case") {
+        var caseDisposition1 = formContext.getControl("vcu_casedisposition1");
+        var caseDisposition2 = formContext.getControl("vcu_casedisposition2");
+
+        if (caseDisposition1 !== null && caseDisposition2 != null) {
+            var caseDisposition1Value = formContext.getAttribute("vcu_casedisposition1").getValue();
+            var caseDisposition2Value = formContext.getAttribute("vcu_casedisposition2").getValue();
+            var allFields = ["vcu_city", "vcu_zip", "vcu_state", "vcu_authorizeduserdateofbirth", "vcu_authorizeduserssn"];
+
+            if (caseDisposition1Value == 800440006 && caseDisposition2Value == 800440029) { // Credit Card // Authorized User Form
+                var isAuthUserAddress = formContext.getAttribute("vcu_isauthorizeduseraddresssameasprimaryaddress");
+
+                if (isAuthUserAddress != null) {
+                    if (isAuthUserAddress.getValue() === false) { // Auth User address is NOT the same as primary
+                        // Show and make 'vcu_address' mandatory
+                        var addressControl = formContext.getControl("vcu_address");
+                        var addressAttribute = formContext.getAttribute("vcu_address");
+                        if (addressControl && addressAttribute) {
+                            addressControl.setVisible(true);
+                            addressAttribute.setRequiredLevel("required");
+                        }
+
+                        // Show other fields and set required level
+                        allFields.forEach(field => {
+                            if (formContext.getControl(field) != null) {
+                                formContext.getControl(field).setVisible(true);
+                                if (formContext.getAttribute(field) != null) {
+                                    formContext.getAttribute(field).setRequiredLevel("required");
+                                }
+                            }
+                        });
+                    } else if (isAuthUserAddress.getValue() === true) { // Auth User address is the same as primary
+                        // Hide and clear 'vcu_address'
+                        var addressControl = formContext.getControl("vcu_address");
+                        var addressAttribute = formContext.getAttribute("vcu_address");
+                        if (addressControl && addressAttribute) {
+                            addressControl.setVisible(false);
+                            addressAttribute.setRequiredLevel("none");
+                            addressAttribute.setValue(null);
+                        }
+
+                        // Hide other fields and clear values
+                        allFields.forEach(field => {
+                            formContext.getControl(field).setVisible(false);
+                            if (formContext.getAttribute(field) != null) {
+                                formContext.getAttribute(field).setRequiredLevel("none");
+                                formContext.getAttribute(field).setValue(null);
+                            }
+                        });
+                    }
+                }
+            } else {
+                // If caseDisposition1 or caseDisposition2 does not match the expected values, hide fields
+                allFields.forEach(field => {
+                    formContext.getControl(field).setVisible(false);
+                    if (formContext.getAttribute(field) != null) {
+                        formContext.getAttribute(field).setRequiredLevel("none");
+                    }
+                });
+
+                // Also hide 'vcu_address' in this scenario
+                var addressControl = formContext.getControl("vcu_address");
+                var addressAttribute = formContext.getAttribute("vcu_address");
+                if (addressControl && addressAttribute) {
+                    addressControl.setVisible(false);
+                    addressAttribute.setRequiredLevel("none");
+                }
+            }
+        }
+    }
+}
+
+
+function HideShowFieldsUChoose(executionContext) {
+    var formContext = executionContext.getFormContext();
+    var formLabel = formContext.ui.formSelector.getCurrentItem().getLabel();
+
+    if (formLabel === "Case") {
+        var caseDisposition1 = formContext.getAttribute("vcu_casedisposition1");
+        var caseDisposition2 = formContext.getAttribute("vcu_casedisposition2");
+
+        if (caseDisposition1 !== null && caseDisposition2 !== null) {
+            var caseDisposition1Value = caseDisposition1.getValue();
+            var caseDisposition2Value = caseDisposition2.getValue();
+
+            if (caseDisposition1Value === 800440006 && caseDisposition2Value === 800440032) {
+                formContext.getControl("vcu_chooseoption").setVisible(true);
+                formContext.getAttribute("vcu_chooseoption").setRequiredLevel("required"); // Make it mandatory
+
+                var chooseOption = formContext.getAttribute("vcu_chooseoption").getValue();
+
+                function toggleFieldVisibility(fieldName, isVisible, isRequired) {
+                    var control = formContext.getControl(fieldName);
+                    var attribute = formContext.getAttribute(fieldName);
+
+                    if (control && attribute) {
+                        control.setVisible(isVisible);
+
+                        if (isVisible) {
+                            attribute.setRequiredLevel(isRequired ? "required" : "none");
+                        } else {
+                            attribute.setRequiredLevel("none");
+                            attribute.setValue(null);
+                        }
+                    }
+                }
+
+                toggleFieldVisibility("vcu_transactionamount", chooseOption === 800440000, true);
+                toggleFieldVisibility("vcu_transactiondate", chooseOption === 800440000, true);
+
+                toggleFieldVisibility("vcu_cardaccounttobedelinked", chooseOption === 800440002, true);
+                toggleFieldVisibility("vcu_cardholdernameofcreditcardtobedelinked", chooseOption === 800440002, true);
+
+                toggleFieldVisibility("vcu_numberofpoints", chooseOption === 800440001, true);
+                toggleFieldVisibility("vcu_tocc", chooseOption === 800440001, true);
+                toggleFieldVisibility("vcu_fromcc", chooseOption === 800440001, true);
+
+                toggleFieldVisibility("vcu_numberofpointsredeemed", chooseOption === 800440003, true);
+                toggleFieldVisibility("vcu_fraudredemptionitem", chooseOption === 800440003, true);
+                toggleFieldVisibility("vcu_fraudadditionalinformation", chooseOption === 800440003, true);
+                toggleFieldVisibility("vcu_itemsentto", chooseOption === 800440003, true);
+                toggleFieldVisibility("vcu_whenwasthelastlegitimateredemption", chooseOption === 800440003, true);
+                toggleFieldVisibility("vcu_creditcardstatus", chooseOption === 800440003, true);
+                toggleFieldVisibility("vcu_newcardnumber", chooseOption === 800440003, true);
+
+                validateNumericFields(["vcu_numberofpoints", "vcu_cardaccounttobedelinked", "vcu_numberofpointsredeemed"]);
+                validateDateFields(["vcu_transactiondate", "vcu_whenwasthelastlegitimateredemption"]);
+
+            } else {
+                formContext.getControl("vcu_chooseoption").setVisible(false);
+                formContext.getAttribute("vcu_chooseoption").setValue(null); // Clear the value
+                formContext.getAttribute("vcu_chooseoption").setRequiredLevel("none"); // Make it non-mandatory
+            }
+        }
+    }
+
+    function validateNumericFields(fields) {
+        fields.forEach(function (fieldName) {
+            var attribute = formContext.getAttribute(fieldName);
+            var control = formContext.getControl(fieldName);
+            if (attribute && control) {
+                var fieldValue = attribute.getValue();
+                if (fieldValue !== null && isNaN(fieldValue)) {
+                    alert(control.getLabel() + " should contain only numeric values.");
+                    attribute.setValue(null);
+                }
+            }
+        });
+    }
+
+    function validateDateFields(fields) {
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        fields.forEach(function (fieldName) {
+            var attribute = formContext.getAttribute(fieldName);
+            var control = formContext.getControl(fieldName);
+            if (attribute && control) {
+                var fieldValue = attribute.getValue();
+                if (fieldValue !== null) {
+                    var selectedDate = new Date(fieldValue);
+
+                    if (selectedDate > today) {
+                        alert(control.getLabel() + " cannot have a future date. Please select today or a past date.");
+                        attribute.setValue(null);
+                    }
+                }
+            }
+        });
+    }
+}
+function setJointCardHolderDetails(executionContext) {
+    var formContext = executionContext.getFormContext();
+
+    var caseDisposition1 = formContext.getControl("vcu_casedisposition1");
+    var caseDisposition2 = formContext.getControl("vcu_casedisposition2");
+    var JointCardHolderMember = formContext.getAttribute("vcu_joint_card_holder_name");
+
+    if (caseDisposition1 !== null && caseDisposition2 != null && JointCardHolderMember != null) {
+        var caseDisposition1Value = formContext.getAttribute("vcu_casedisposition1").getValue();
+        var caseDisposition2Value = formContext.getAttribute("vcu_casedisposition2").getValue();
+        var JointCardHolderMemberValue = formContext.getAttribute("vcu_joint_card_holder_name").getValue();
+        if (caseDisposition1Value != null && caseDisposition1Value == 800440006 && caseDisposition2Value != null && caseDisposition2Value == 800440030 && JointCardHolderMemberValue) {
+            Xrm.WebApi.online.retrieveRecord("contact", JointCardHolderMemberValue[0].id.replace(/{|}/g, ""), "?$select=vcu_cif,address1_line1,address1_line2,address1_city,address1_stateorprovince,mobilephone,address1_postalcode").then(
+                function success(result) {
+                    formContext.getAttribute("vcu_joint_card_holder_cif").setValue(result?.vcu_cif)
+                    formContext.getAttribute("vcu_addressline1").setValue(result?.address1_line1)
+                    formContext.getAttribute("vcu_addressline2").setValue(result?.address1_line2)
+                    formContext.getAttribute("vcu_phone").setValue(result?.mobilephone)
+                    formContext.getAttribute("vcu_plasticmailcity").setValue(result?.address1_city)
+                    formContext.getAttribute("vcu_plasticmailstate").setValue(result?.address1_stateorprovince)
+                    formContext.getAttribute("vcu_plasticmailzip").setValue(result?.address1_postalcode)
+
+                },
+                function (error) {
+                    Xrm.Utility.alertDialog(error.message);
+                }
+            );
+        }
+    }
+    else {
+        formContext.getAttribute("vcu_joint_card_holder_cif").setValue("")
+        formContext.getAttribute("vcu_addressline1").setValue("")
+        formContext.getAttribute("vcu_addressline2").setValue("")
+        formContext.getAttribute("vcu_phone").setValue("")
+        formContext.getAttribute("vcu_plasticmailcity").setValue("")
+        formContext.getAttribute("vcu_plasticmailstate").setValue("")
+        formContext.getAttribute("vcu_plasticmailzip").setValue("")
+    }
+
+}
+
+function toggleFieldsBasedOnPaymentOrAdjustment(executionContext) {
+    var formContext = executionContext.getFormContext();
+
+    var paymentOrAdjustmentValue = formContext.getAttribute("vcu_selectpaymentoradjustment").getValue();
+
+    var amountCurrencyField = formContext.getControl("vcu_amountcreditcard");
+    var activeVyStarField = formContext.getControl("vcu_doesmemberhaveactivevystaraccount");
+
+    if (paymentOrAdjustmentValue === 800440002) {
+        amountCurrencyField.setVisible(true);
+        formContext.getAttribute("vcu_amountcreditcard").setRequiredLevel("required");
+
+        activeVyStarField.setVisible(true);
+        formContext.getAttribute("vcu_doesmemberhaveactivevystaraccount").setRequiredLevel("required");
+    } else {
+        amountCurrencyField.setVisible(false);
+        formContext.getAttribute("vcu_amountcreditcard").setRequiredLevel("none");
+
+        activeVyStarField.setVisible(false);
+        formContext.getAttribute("vcu_doesmemberhaveactivevystaraccount").setRequiredLevel("none");
+    }
+}
+
+function handleVyStarAccountFields(executionContext) {
+    var formContext = executionContext.getFormContext();
+    formContext.getControl("vcu_vystaraccount3").setVisible(false);
+    formContext.getAttribute("vcu_vystaraccount3").setRequiredLevel("none");
+
+    formContext.getControl("vcu_address").setVisible(false);
+    formContext.getAttribute("vcu_address").setRequiredLevel("none");
+
+    var doesMemberHaveActiveVyStarAccount = formContext.getAttribute("vcu_doesmemberhaveactivevystaraccount");
+
+    if (doesMemberHaveActiveVyStarAccount != null && doesMemberHaveActiveVyStarAccount.getValue() != null) {
+        var accountValue = doesMemberHaveActiveVyStarAccount.getValue();
+
+        if (accountValue === 800440000) {
+            formContext.getControl("vcu_vystaraccount3").setVisible(true);
+            formContext.getAttribute("vcu_vystaraccount3").setRequiredLevel("required");
+
+            formContext.getControl("vcu_address").setVisible(false);
+            formContext.getAttribute("vcu_address").setRequiredLevel("none");
+
+        } else if (accountValue === 800440001) {
+            formContext.getControl("vcu_address").setVisible(true);
+            formContext.getAttribute("vcu_address").setRequiredLevel("required");
+
+            formContext.getControl("vcu_vystaraccount3").setVisible(false);
+            formContext.getAttribute("vcu_vystaraccount3").setRequiredLevel("none");
+        }
+    } else {
+        formContext.getControl("vcu_vystaraccount3").setVisible(false);
+        formContext.getAttribute("vcu_vystaraccount3").setRequiredLevel("none");
+
+        formContext.getControl("vcu_address").setVisible(false);
+        formContext.getAttribute("vcu_address").setRequiredLevel("none");
+    }
+}
+
+function handleSelectPaymentAdjustmentFields(executionContext) {
+    var formContext = executionContext.getFormContext();
+
+
+    var selectPaymentAdjustment = formContext.getAttribute("vcu_selectpaymentoradjustment");
+
+    if (selectPaymentAdjustment != null && selectPaymentAdjustment.getValue() != null) {
+        var selectPaymentAdjustmentValue = selectPaymentAdjustment.getValue();
+
+        if (selectPaymentAdjustmentValue === 800440003) {
+            formContext.getControl("vcu_researchpaymentmethod").setVisible(true);
+            formContext.getAttribute("vcu_researchpaymentmethod").setRequiredLevel("required");
+
+            formContext.getControl("vcu_datefundsclearedaccount").setVisible(true);
+            formContext.getAttribute("vcu_datefundsclearedaccount").setRequiredLevel("required");
+
+            formContext.getControl("vcu_researchpaymentamountcurrency").setVisible(true);
+            formContext.getAttribute("vcu_researchpaymentamountcurrency").setRequiredLevel("required");
+
+            formContext.getControl("vcu_vystaraccount4").setVisible(true);
+            formContext.getAttribute("vcu_vystaraccount4").setRequiredLevel("required");
+        } else {
+            formContext.getControl("vcu_researchpaymentmethod").setVisible(false);
+            formContext.getAttribute("vcu_researchpaymentmethod").setRequiredLevel("none");
+
+            formContext.getControl("vcu_datefundsclearedaccount").setVisible(false);
+            formContext.getAttribute("vcu_datefundsclearedaccount").setRequiredLevel("none");
+
+            formContext.getControl("vcu_researchpaymentamountcurrency").setVisible(false);
+            formContext.getAttribute("vcu_researchpaymentamountcurrency").setRequiredLevel("none");
+
+            formContext.getControl("vcu_vystaraccount4").setVisible(false);
+            formContext.getAttribute("vcu_vystaraccount4").setRequiredLevel("none");
+        }
+    } else {
+
+        formContext.getControl("vcu_researchpaymentmethod").setVisible(false);
+        formContext.getAttribute("vcu_researchpaymentmethod").setRequiredLevel("none");
+
+        formContext.getControl("vcu_datefundsclearedaccount").setVisible(false);
+        formContext.getAttribute("vcu_datefundsclearedaccount").setRequiredLevel("none");
+
+        formContext.getControl("vcu_researchpaymentamount").setVisible(false);
+        formContext.getAttribute("vcu_researchpaymentamount").setRequiredLevel("none");
+
+        formContext.getControl("vcu_vystaraccount4").setVisible(false);
+        formContext.getAttribute("vcu_vystaraccount4").setRequiredLevel("none");
+    }
+}
