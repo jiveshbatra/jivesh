@@ -1,0 +1,114 @@
+import time
+import threading
+from decimal import Decimal, ROUND_DOWN
+from web3 import Web3
+from telegram import Update, Bot
+from telegram.ext import Updater, CommandHandler, CallbackContext
+
+# Configurations
+TELEGRAM_TOKEN = "8137392947:AAEluDjugSbflz3bvhkkIfyu5W7jODZ5n40"
+BSC_RPC_URL = "https://rpc.ankr.com/bsc/8201e4d4a1ceb5e39de56588055661de96ded04615cd5d461063b3c68cc6f660"
+ADDRESSES_TO_TRACK = {
+    "Albert": "0x67C2c745B11D89C92B2afF1467B68cC523d15fCd",
+    "Walker": "0x4e59f3816aA1821B9DbA14A9452B0b682F490853"
+}
+USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955"
+PERCENTAGE_FEE = Decimal(0.5)
+MINIMUM_AMOUNT = Decimal(1)
+
+# Initialize web3
+web3 = Web3(Web3.HTTPProvider(BSC_RPC_URL))
+
+# Telegram Bot Initialization
+bot = Bot(token=TELEGRAM_TOKEN)
+
+# Track balances
+last_balances = {name: Decimal(0) for name in ADDRESSES_TO_TRACK}
+
+
+def get_usdt_balance(address):
+    try:
+        contract = web3.eth.contract(address=Web3.to_checksum_address(USDT_CONTRACT), abi=[
+            {
+                "constant": True,
+                "inputs": [{"name": "_owner", "type": "address"}],
+                "name": "balanceOf",
+                "outputs": [{"name": "balance", "type": "uint256"}],
+                "type": "function"
+            }
+        ])
+        balance = contract.functions.balanceOf(Web3.to_checksum_address(address)).call(block_identifier="latest")
+        return Decimal(web3.from_wei(balance, "ether")).quantize(Decimal("0.01"), rounding=ROUND_DOWN)
+    except:
+        return Decimal(0)
+
+
+def monitor_wallets(chat_id):
+    global last_balances
+    while True:
+        for name, address in ADDRESSES_TO_TRACK.items():
+            current_balance = get_usdt_balance(address)
+
+            if current_balance > last_balances[name]:  # Received Amount
+                received = (current_balance - last_balances[name]).quantize(Decimal("0.01"), rounding=ROUND_DOWN)
+
+                if received >= MINIMUM_AMOUNT:
+                    fee = Decimal(1) if received <= 200 else (received * (PERCENTAGE_FEE / Decimal(100))).quantize(
+                        Decimal("0.01"), rounding=ROUND_DOWN
+                    )
+                    net_amount = (received - fee).quantize(Decimal("0.01"), rounding=ROUND_DOWN)
+                    message = (
+                        f"🚨 *New Incoming Transaction!* 🚨\n\n"
+                        f"💼 *Wallet:* {name}\n"
+                        f"💰 *Received:* {received:.2f} USDT\n"
+                        f"💸 *Fee Applied:* {fee:.2f} USDT\n"
+                        f"✅ *Net Amount:* {net_amount:.2f} USDT\n\n"
+                        f"Thank you for using our service! 🙌"
+                    )
+                    bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
+
+            elif current_balance < last_balances[name]:  # Sent Amount
+                sent = (last_balances[name] - current_balance).quantize(Decimal("0.01"), rounding=ROUND_DOWN)
+
+                if sent >= MINIMUM_AMOUNT:
+                    message = (
+                        f"⚠️ *New Outgoing Transaction!* ⚠️\n\n"
+                        f"💼 *Wallet:* {name}\n"
+                        f"📤 *Sent:* {sent:.2f} USDT\n\n"
+                        f"Thank you for using our service! 🙌"
+                    )
+                    bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
+
+            last_balances[name] = current_balance
+        time.sleep(3)
+
+
+def track(update: Update, context: CallbackContext):
+    chat_id = update.effective_chat.id
+    context.bot.send_message(
+        chat_id=chat_id,
+        text="Bot has started monitoring wallet transactions in this group. Notifications will be sent here."
+    )
+    monitoring_thread = threading.Thread(target=monitor_wallets, args=(chat_id,), daemon=True)
+    monitoring_thread.start()
+
+
+def main():
+    if not web3.is_connected():
+        print("Failed to connect to the BSC RPC endpoint. Check the RPC URL.")
+        return
+
+    updater = Updater(token=TELEGRAM_TOKEN)
+    dispatcher = updater.dispatcher
+
+    dispatcher.add_handler(CommandHandler("track", track))
+    updater.start_polling()
+    updater.idle()
+
+
+if __name__ == "__main__":
+    for name, address in ADDRESSES_TO_TRACK.items():
+        balance = get_usdt_balance(address)
+        last_balances[name] = balance
+
+    main()
