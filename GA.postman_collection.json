@@ -1,0 +1,314 @@
+{
+	"info": {
+		"_postman_id": "f71dc280-c2bc-430a-a94e-c850b46d04f0",
+		"name": "GA",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "27919244",
+		"_collection_link": "https://restless-flare-476851.postman.co/workspace/New-Team-Workspace~7c50b8d3-a7f7-4ba3-86d1-a2d643ff79cc/collection/27919244-f71dc280-c2bc-430a-a94e-c850b46d04f0?action=share&source=collection_link&creator=27919244"
+	},
+	"item": [
+		{
+			"name": "GA",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"client_id\": \"debug-user-12345\",\r\n  \"events\": [\r\n    {\r\n      \"name\": \"test_event\",\r\n      \"params\": {\r\n        \"debug_mode\": 1,\r\n        \"example_param\": \"Hello_Debug_Mode\"\r\n      }\r\n    }\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://www.google-analytics.com/debug/mp/collect?measurement_id=G-J7BC847LG8&api_secret=3swlLTpER6eXBROLXI-X6Q",
+					"protocol": "https",
+					"host": [
+						"www",
+						"google-analytics",
+						"com"
+					],
+					"path": [
+						"debug",
+						"mp",
+						"collect"
+					],
+					"query": [
+						{
+							"key": "measurement_id",
+							"value": "G-J7BC847LG8"
+						},
+						{
+							"key": "api_secret",
+							"value": "3swlLTpER6eXBROLXI-X6Q"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GA",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"client_id\": \"123456.7654321\",\r\n  \"events\": [\r\n    {\r\n      \"name\": \"tom_test\",\r\n      \"params\": {\r\n        \"transaction_id\": \"T12345\",\r\n        \"value\": 99.99,\r\n        \"currency\": \"USD\",\r\n        \"debug_mode\": true\r\n      }\r\n    }\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://www.google-analytics.com/mp/collect?measurement_id=G-J7BC847LG8&api_secret=3swlLTpER6eXBROLXI-X6Q",
+					"protocol": "https",
+					"host": [
+						"www",
+						"google-analytics",
+						"com"
+					],
+					"path": [
+						"mp",
+						"collect"
+					],
+					"query": [
+						{
+							"key": "measurement_id",
+							"value": "G-J7BC847LG8"
+						},
+						{
+							"key": "api_secret",
+							"value": "3swlLTpER6eXBROLXI-X6Q"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GA Complete",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"client_id\": \"123456.7654321\",\r\n  \"events\": [\r\n    {\r\n      \"name\": \"tom_test\",\r\n      \"params\": {\r\n        \"transaction_id\": \"T12345\",\r\n        \"value\": 99.99,\r\n        \"currency\": \"USD\",\r\n        \"debug_mode\": true\r\n      }\r\n    }\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://www.google-analytics.com/mp/collect?measurement_id=G-J7BC847LG8&api_secret=3swlLTpER6eXBROLXI-X6Q",
+					"protocol": "https",
+					"host": [
+						"www",
+						"google-analytics",
+						"com"
+					],
+					"path": [
+						"mp",
+						"collect"
+					],
+					"query": [
+						{
+							"key": "measurement_id",
+							"value": "G-J7BC847LG8"
+						},
+						{
+							"key": "api_secret",
+							"value": "3swlLTpER6eXBROLXI-X6Q"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GAJivesh",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"client_id\": \"123456.7654321\",\r\n  \"events\": [\r\n    {\r\n      \"name\": \"tm\",\r\n      \"params\": {\r\n        \"transaction_id\": \"T12345\",\r\n        \"value\": 99.99,\r\n        \"currency\": \"USD\"\r\n      }\r\n    }\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://www.google-analytics.com/mp/collect?measurement_id=G-J7BC847LG8&api_secret=3swlLTpER6eXBROLXI-X6Q",
+					"protocol": "https",
+					"host": [
+						"www",
+						"google-analytics",
+						"com"
+					],
+					"path": [
+						"mp",
+						"collect"
+					],
+					"query": [
+						{
+							"key": "measurement_id",
+							"value": "G-J7BC847LG8"
+						},
+						{
+							"key": "api_secret",
+							"value": "3swlLTpER6eXBROLXI-X6Q"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GA Complete Copy",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "GTM",
+						"value": "GTM-KPSV4D2S",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"client_id\": \"123456.7654321\",\r\n  \"events\": [\r\n    {\r\n      \"name\": \"sign_up\",\r\n      \"params\": {\r\n        \"transaction_id\": \"T12345\",\r\n        \"value\": 99.99,\r\n        \"currency\": \"USD\",\r\n        \"debug_mode\": true\r\n      }\r\n    }\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://www.google-analytics.com/mp/collect?measurement_id=G-J7BC847LG8&api_secret=3swlLTpER6eXBROLXI-X6Q",
+					"protocol": "https",
+					"host": [
+						"www",
+						"google-analytics",
+						"com"
+					],
+					"path": [
+						"mp",
+						"collect"
+					],
+					"query": [
+						{
+							"key": "measurement_id",
+							"value": "G-J7BC847LG8"
+						},
+						{
+							"key": "api_secret",
+							"value": "3swlLTpER6eXBROLXI-X6Q"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GTM-KPSV4D2S",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "gtm",
+						"value": "GTM-KPSV4D2S",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"client_id\": \"123456.7654321\",\r\n  \"events\": [\r\n    {\r\n      \"name\": \"sign_up\",\r\n      \"params\": {\r\n        \"transaction_id\": \"T12345\",\r\n        \"value\": 99.99,\r\n        \"currency\": \"USD\",\r\n        \"debug_mode\": true\r\n      }\r\n    }\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://www.google-analytics.com/mp/collect?measurement_id=G-J7BC847LG8&api_secret=3swlLTpER6eXBROLXI-X6Q&gtm=GTM-KPSV4D2S",
+					"protocol": "https",
+					"host": [
+						"www",
+						"google-analytics",
+						"com"
+					],
+					"path": [
+						"mp",
+						"collect"
+					],
+					"query": [
+						{
+							"key": "measurement_id",
+							"value": "G-J7BC847LG8"
+						},
+						{
+							"key": "api_secret",
+							"value": "3swlLTpER6eXBROLXI-X6Q"
+						},
+						{
+							"key": "gtm",
+							"value": "GTM-KPSV4D2S"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
