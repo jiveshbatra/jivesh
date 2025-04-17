@@ -1,0 +1,538 @@
+<Project>
+  <Name>Erd</Name>
+  <ProjectItem type="NClass.DiagramEditor.ClassDiagram.Diagram" assembly="JourneyIntoCRM.XrmToolbox.ERDPlugin, Version=2.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <Name>Entity Diagram for Erd</Name>
+    <Language>CSharp</Language>
+    <Entities>
+      <Entity type="Class">
+        <Name>Business</Name>
+        <Access>Public</Access>
+        <Location left="359" top="35" />
+        <Size width="162" height="723" />
+        <Collapsed>True</Collapsed>
+        <Member type="Field"> Address 2: ID</Member>
+        <Member type="Field"> (Deprecated) Process Stage</Member>
+        <Member type="Field"> Address1</Member>
+        <Member type="Field"> Commercial Services Representative</Member>
+        <Member type="Field"> Contact To Account</Member>
+        <Member type="Field"> Created By</Member>
+        <Member type="Field"> Created By (Delegate)</Member>
+        <Member type="Field"> Created By (External Party)</Member>
+        <Member type="Field"> CRIF Dealer Representative</Member>
+        <Member type="Field"> Currency</Member>
+        <Member type="Field"> Domicile</Member>
+        <Member type="Field"> Entity Image Id</Member>
+        <Member type="Field"> KPI</Member>
+        <Member type="Field"> Last SLA applied</Member>
+        <Member type="Field"> Managing Partner</Member>
+        <Member type="Field"> Master ID</Member>
+        <Member type="Field"> Modified By</Member>
+        <Member type="Field"> Modified By (Delegate)</Member>
+        <Member type="Field"> Modified By (External Party)</Member>
+        <Member type="Field"> My Top 10 Businesses</Member>
+        <Member type="Field"> Originating Lead</Member>
+        <Member type="Field"> Owner</Member>
+        <Member type="Field"> Owning Business Unit</Member>
+        <Member type="Field"> Owning Team</Member>
+        <Member type="Field"> Owning User</Member>
+        <Member type="Field"> Parent Account</Member>
+        <Member type="Field"> Preferred Facility/Equipment</Member>
+        <Member type="Field"> Preferred Service</Member>
+        <Member type="Field"> Preferred User</Member>
+        <Member type="Field"> Price List</Member>
+        <Member type="Field"> Primary Contact</Member>
+        <Member type="Field"> Questionnaire Completed By</Member>
+        <Member type="Field"> Relationship Specialist</Member>
+        <Member type="Field"> Sales Acceleration Insights ID</Member>
+        <Member type="Field"> Segment Id</Member>
+        <Member type="Field"> SLA</Member>
+        <Member type="Field"> Territory</Member>
+        <Member type="Field"> VyStar At Work Representative</Member>
+        <Modifier>None</Modifier>
+      </Entity>
+      <Entity type="Class">
+        <Name>Member</Name>
+        <Access>Public</Access>
+        <Location left="82" top="35" />
+        <Size width="162" height="876" />
+        <Collapsed>True</Collapsed>
+        <Member type="Field"> Contact</Member>
+        <Member type="Field"> (Deprecated) Process Stage</Member>
+        <Member type="Field"> Branch</Member>
+        <Member type="Field"> Branch Assist</Member>
+        <Member type="Field"> Business Services Sales Agent</Member>
+        <Member type="Field"> Commercial Services Representative</Member>
+        <Member type="Field"> Companies</Member>
+        <Member type="Field"> Company Name</Member>
+        <Member type="Field"> Created By</Member>
+        <Member type="Field"> Created By (Delegate)</Member>
+        <Member type="Field"> Created By (External Party)</Member>
+        <Member type="Field"> Currency</Member>
+        <Member type="Field"> Domicile</Member>
+        <Member type="Field"> Entity Image Id</Member>
+        <Member type="Field"> Express Rep</Member>
+        <Member type="Field"> KPI</Member>
+        <Member type="Field"> Last SLA applied</Member>
+        <Member type="Field"> LBE Representative</Member>
+        <Member type="Field"> Managing Partner</Member>
+        <Member type="Field"> Master ID</Member>
+        <Member type="Field"> Modified By</Member>
+        <Member type="Field"> Modified By (Delegate)</Member>
+        <Member type="Field"> Modified By (External Party)</Member>
+        <Member type="Field"> Mortgage Origination Representative</Member>
+        <Member type="Field"> Origin Branch</Member>
+        <Member type="Field"> Originating Lead</Member>
+        <Member type="Field"> Owner</Member>
+        <Member type="Field"> Owning Business Unit</Member>
+        <Member type="Field"> Owning Team</Member>
+        <Member type="Field"> Owning User</Member>
+        <Member type="Field"> Parent Contact</Member>
+        <Member type="Field"> parent_contactid</Member>
+        <Member type="Field"> Preferred Facility/Equipment</Member>
+        <Member type="Field"> Preferred Language</Member>
+        <Member type="Field"> Preferred Service</Member>
+        <Member type="Field"> Preferred User</Member>
+        <Member type="Field"> Price List</Member>
+        <Member type="Field"> Questionnaire Completed By</Member>
+        <Member type="Field"> Referring VyStar Member</Member>
+        <Member type="Field"> Region</Member>
+        <Member type="Field"> Relationship Specialist</Member>
+        <Member type="Field"> Reviewed by:</Member>
+        <Member type="Field"> Segment Id</Member>
+        <Member type="Field"> SLA</Member>
+        <Member type="Field"> VIA Representative</Member>
+        <Member type="Field"> VIS Representative</Member>
+        <Member type="Field"> VyStar At Work Representative</Member>
+        <Modifier>None</Modifier>
+      </Entity>
+      <Entity type="Class">
+        <Name>Case</Name>
+        <Access>Public</Access>
+        <Location left="34" top="189" />
+        <Size width="162" height="1080" />
+        <Collapsed>True</Collapsed>
+        <Member type="Field"> Case</Member>
+        <Member type="Field"> (Deprecated) Stage Id</Member>
+        <Member type="Field"> Area</Member>
+        <Member type="Field"> Area</Member>
+        <Member type="Field"> Authorized User's Name</Member>
+        <Member type="Field"> Branch Name</Member>
+        <Member type="Field"> Category</Member>
+        <Member type="Field"> Complaint Against (Primary)</Member>
+        <Member type="Field"> Complaint Against (Secondary)</Member>
+        <Member type="Field"> Contact</Member>
+        <Member type="Field"> Contract</Member>
+        <Member type="Field"> Contract Line</Member>
+        <Member type="Field"> Created By</Member>
+        <Member type="Field"> Created By (Delegate)</Member>
+        <Member type="Field"> Created By (External Party)</Member>
+        <Member type="Field"> Credit Card Number</Member>
+        <Member type="Field"> Credit Card Number 2</Member>
+        <Member type="Field"> Currency</Member>
+        <Member type="Field"> Customer</Member>
+        <Member type="Field"> Department</Member>
+        <Member type="Field"> DO_Not_Use_Credit card Number where</Member>
+        <Member type="Field"> Entitlement</Member>
+        <Member type="Field"> entityimageid</Member>
+        <Member type="Field"> Existing Case</Member>
+        <Member type="Field"> First Response By KPI</Member>
+        <Member type="Field"> From Credit Card Number</Member>
+        <Member type="Field"> IoT Alert</Member>
+        <Member type="Field"> Joint Card Holder Name</Member>
+        <Member type="Field"> Knowledge Base Article</Member>
+        <Member type="Field"> Last SLA applied</Member>
+        <Member type="Field"> Master Case</Member>
+        <Member type="Field"> Modified By</Member>
+        <Member type="Field"> Modified By (Delegate)</Member>
+        <Member type="Field"> Modified By (External Party)</Member>
+        <Member type="Field"> Mortgage ER Record</Member>
+        <Member type="Field"> Owner</Member>
+        <Member type="Field"> Owning Business Unit</Member>
+        <Member type="Field"> Owning SVP</Member>
+        <Member type="Field"> Owning Team</Member>
+        <Member type="Field"> Owning User</Member>
+        <Member type="Field"> Parent Case</Member>
+        <Member type="Field"> Partner</Member>
+        <Member type="Field"> Partner Contact</Member>
+        <Member type="Field"> Previous Owner</Member>
+        <Member type="Field"> Product</Member>
+        <Member type="Field"> Product or Service</Member>
+        <Member type="Field"> Product Type</Member>
+        <Member type="Field"> Received By</Member>
+        <Member type="Field"> Resolve By KPI</Member>
+        <Member type="Field"> Responsible Contact (Deprecated)</Member>
+        <Member type="Field"> Select ER Record number</Member>
+        <Member type="Field"> SLA</Member>
+        <Member type="Field"> Social Profile</Member>
+        <Member type="Field"> Sub Category</Member>
+        <Member type="Field"> Subject</Member>
+        <Member type="Field"> To Credit Card Number</Member>
+        <Member type="Field"> VCU Management Performing Signature Guarantee</Member>
+        <Member type="Field"> VyStar Account</Member>
+        <Member type="Field"> Vystar Account 2</Member>
+        <Modifier>None</Modifier>
+      </Entity>
+      <Entity type="Class">
+        <Name>Lead</Name>
+        <Access>Public</Access>
+        <Location left="568" top="189" />
+        <Size width="162" height="621" />
+        <Collapsed>True</Collapsed>
+        <Member type="Field"> Lead</Member>
+        <Member type="Field"> (Deprecated) Stage Id</Member>
+        <Member type="Field"> Business Product</Member>
+        <Member type="Field"> Created By</Member>
+        <Member type="Field"> Created By (Delegate)</Member>
+        <Member type="Field"> Currency</Member>
+        <Member type="Field"> Customer</Member>
+        <Member type="Field"> Department</Member>
+        <Member type="Field"> Department/Branch </Member>
+        <Member type="Field"> entityimageid</Member>
+        <Member type="Field"> From Dept/Branch</Member>
+        <Member type="Field"> KPI</Member>
+        <Member type="Field"> Last SLA applied</Member>
+        <Member type="Field"> Master ID</Member>
+        <Member type="Field"> Modified By</Member>
+        <Member type="Field"> Modified By (Delegate)</Member>
+        <Member type="Field"> Originating Case</Member>
+        <Member type="Field"> Owner</Member>
+        <Member type="Field"> Owning Business Unit</Member>
+        <Member type="Field"> Owning Team</Member>
+        <Member type="Field"> Owning User</Member>
+        <Member type="Field"> Parent Account for lead</Member>
+        <Member type="Field"> Parent Contact for lead</Member>
+        <Member type="Field"> Predictive Score</Member>
+        <Member type="Field"> Product Type</Member>
+        <Member type="Field"> Qualifying Opportunity</Member>
+        <Member type="Field"> Related Campaign Response</Member>
+        <Member type="Field"> Segment Id</Member>
+        <Member type="Field"> SLA</Member>
+        <Member type="Field"> Source Campaign</Member>
+        <Member type="Field"> To Department/Branch</Member>
+        <Member type="Field"> To Department/Branch</Member>
+        <Modifier>None</Modifier>
+      </Entity>
+      <Entity type="Class">
+        <Name>Department/Branch</Name>
+        <Access>Public</Access>
+        <Location left="481" top="338" />
+        <Size width="162" height="791" />
+        <Collapsed>True</Collapsed>
+        <Member type="Field"> Department</Member>
+        <Member type="Field"> Assistant Branch Manager 1</Member>
+        <Member type="Field"> Assistant Branch Manager 2</Member>
+        <Member type="Field"> Branch Vice President</Member>
+        <Member type="Field"> Business Banker</Member>
+        <Member type="Field"> Business Banker 1</Member>
+        <Member type="Field"> Business Banker 10</Member>
+        <Member type="Field"> Business Banker 11</Member>
+        <Member type="Field"> Business Banker 12</Member>
+        <Member type="Field"> Business Banker 13</Member>
+        <Member type="Field"> Business Banker 14</Member>
+        <Member type="Field"> Business Banker 15</Member>
+        <Member type="Field"> Business Banker 16</Member>
+        <Member type="Field"> Business Banker 17</Member>
+        <Member type="Field"> Business Banker 18</Member>
+        <Member type="Field"> Business Banker 19</Member>
+        <Member type="Field"> Business Banker 2</Member>
+        <Member type="Field"> Business Banker 20</Member>
+        <Member type="Field"> Business Banker 3</Member>
+        <Member type="Field"> Business Banker 4</Member>
+        <Member type="Field"> Business Banker 5</Member>
+        <Member type="Field"> Business Banker 6</Member>
+        <Member type="Field"> Business Banker 7</Member>
+        <Member type="Field"> Business Banker 8</Member>
+        <Member type="Field"> Business Banker 9</Member>
+        <Member type="Field"> Created By</Member>
+        <Member type="Field"> Created By (Delegate)</Member>
+        <Member type="Field"> Default Queue</Member>
+        <Member type="Field"> Default Team</Member>
+        <Member type="Field"> Financial Advisor</Member>
+        <Member type="Field"> Home Loan Advisor</Member>
+        <Member type="Field"> Insurance Agent</Member>
+        <Member type="Field"> Market President</Member>
+        <Member type="Field"> Modified By</Member>
+        <Member type="Field"> Modified By (Delegate)</Member>
+        <Member type="Field"> Owner</Member>
+        <Member type="Field"> Owning Business Unit</Member>
+        <Member type="Field"> Owning Team</Member>
+        <Member type="Field"> Owning User</Member>
+        <Member type="Field"> Region</Member>
+        <Member type="Field"> Regional Vice President</Member>
+        <Member type="Field"> Senior Vice President</Member>
+        <Modifier>None</Modifier>
+      </Entity>
+      <Entity type="Class">
+        <Name>Credit Card</Name>
+        <Access>Public</Access>
+        <Location left="235" top="338" />
+        <Size width="162" height="247" />
+        <Collapsed>True</Collapsed>
+        <Member type="Field"> Credit Card</Member>
+        <Member type="Field"> Created By</Member>
+        <Member type="Field"> Created By (Delegate)</Member>
+        <Member type="Field"> Member</Member>
+        <Member type="Field"> Modified By</Member>
+        <Member type="Field"> Modified By (Delegate)</Member>
+        <Member type="Field"> Owner</Member>
+        <Member type="Field"> Owning Business Unit</Member>
+        <Member type="Field"> Owning Team</Member>
+        <Member type="Field"> Owning User</Member>
+        <Modifier>None</Modifier>
+      </Entity>
+      <Entity type="Class">
+        <Name>Referral</Name>
+        <Access>Public</Access>
+        <Location left="318" top="189" />
+        <Size width="162" height="808" />
+        <Collapsed>True</Collapsed>
+        <Member type="Field"> Activity</Member>
+        <Member type="Field"> (Deprecated) Process Stage</Member>
+        <Member type="Field"> Appointment</Member>
+        <Member type="Field"> Business</Member>
+        <Member type="Field"> BVP</Member>
+        <Member type="Field"> Created By</Member>
+        <Member type="Field"> Created By (Delegate)</Member>
+        <Member type="Field"> Currency</Member>
+        <Member type="Field"> Dept/Branch</Member>
+        <Member type="Field"> Escalated by SLA</Member>
+        <Member type="Field"> Existing Personal Member</Member>
+        <Member type="Field"> First Response</Member>
+        <Member type="Field"> From Dept/Branch</Member>
+        <Member type="Field"> Last SLA applied</Member>
+        <Member type="Field"> Modified By</Member>
+        <Member type="Field"> Modified By (Delegate)</Member>
+        <Member type="Field"> Most Convenient Branch</Member>
+        <Member type="Field"> Name</Member>
+        <Member type="Field"> Originating Lead</Member>
+        <Member type="Field"> Owner</Member>
+        <Member type="Field"> Owning Business Unit</Member>
+        <Member type="Field"> Owning Team</Member>
+        <Member type="Field"> Owning User</Member>
+        <Member type="Field"> Parent</Member>
+        <Member type="Field"> Product Type</Member>
+        <Member type="Field"> ProductType</Member>
+        <Member type="Field"> Qualified Referral</Member>
+        <Member type="Field"> Referral Status</Member>
+        <Member type="Field"> Referred by Branch/Dept</Member>
+        <Member type="Field"> Referred by Emp</Member>
+        <Member type="Field"> Referred by Region</Member>
+        <Member type="Field"> Referred to Branch/Dept</Member>
+        <Member type="Field"> Referred to Region</Member>
+        <Member type="Field"> Referrer Branch</Member>
+        <Member type="Field"> Referring to Queue</Member>
+        <Member type="Field"> Routed To Team</Member>
+        <Member type="Field"> RVP</Member>
+        <Member type="Field"> Sender's Mailbox</Member>
+        <Member type="Field"> Service</Member>
+        <Member type="Field"> SLA</Member>
+        <Member type="Field"> SVP</Member>
+        <Member type="Field"> To Department/Branch</Member>
+        <Member type="Field"> To SVP</Member>
+        <Modifier>None</Modifier>
+      </Entity>
+    </Entities>
+    <Relationships>
+      <Relationship type="Association" first="0" second="2">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="0" second="3">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="0" second="6">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="0" second="1">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="0" second="0">
+        <Label>
+        </Label>
+        <StartOrientation>Horizontal</StartOrientation>
+        <EndOrientation>Vertical</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="3" second="0">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="1" second="2">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="1" second="3">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="1" second="6">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="1" second="0">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="1" second="1">
+        <Label>
+        </Label>
+        <StartOrientation>Horizontal</StartOrientation>
+        <EndOrientation>Vertical</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="1" second="5">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="3" second="1">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="2" second="2">
+        <Label>
+        </Label>
+        <StartOrientation>Horizontal</StartOrientation>
+        <EndOrientation>Vertical</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="2" second="3">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="2" second="6">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="3" second="3">
+        <Label>
+        </Label>
+        <StartOrientation>Horizontal</StartOrientation>
+        <EndOrientation>Vertical</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="3" second="6">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="4" second="2">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="4" second="6">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="4" second="1">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="4" second="0">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="4" second="3">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="5" second="2">
+        <Label>
+        </Label>
+        <StartOrientation>Vertical</StartOrientation>
+        <EndOrientation>Horizontal</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+      <Relationship type="Association" first="6" second="6">
+        <Label>
+        </Label>
+        <StartOrientation>Horizontal</StartOrientation>
+        <EndOrientation>Vertical</EndOrientation>
+        <Direction>Unidirectional</Direction>
+        <AssociationType>Association</AssociationType>
+      </Relationship>
+    </Relationships>
+  </ProjectItem>
+</Project>
